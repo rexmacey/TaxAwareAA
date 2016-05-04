@@ -1,0 +1,22 @@
+As of Date,Asset class,Expected Return %,Yield %,Growth %,Roll Return Net Credit Loss %,Valuation Change Return %,FX Return %,Volatility %,Credit Loss %,Collateral %,Rebalance %,Confidence Interval -67 %,Confidence Interval -95 %,Confidence Interval 67 %,Confidence Interval 95 %
+Mar-16,US Large,1.251528,2.1701,1.261234,-,-2.179806,0,14.259905,-,-,-,-1.003161,-3.25785,3.506217,5.760906
+Mar-16,US Small,0.437456,1.6637,2.01139,-,-3.237634,0,18.904686,-,-,-,-2.551637,-5.54073,3.426549,6.415642
+Mar-16,EAFE Equity,6.198367,3.565054,1.261234,-,0.340694,1.031386,16.685833,-,-,-,3.560105,0.921843,8.836629,11.474891
+Mar-16,EM Equity,8.146385,2.942077,1.50331,-,1.767231,1.933766,23.470419,-,-,-,4.435386,0.724387,11.857384,15.568383
+Mar-16,ST US Treas,0.16608,-0.000009,-,0.25096,-0.084871,0,2.150915,0,-,-,-0.174009,-0.514098,0.506169,0.846258
+Mar-16,LT US Treas,0.070747,1.102785,-,0.250422,-1.282461,0,11.382818,0,-,-,-1.729035,-3.528817,1.870529,3.670311
+Mar-16,US Core,0.754537,0.778182,-,0.674514,-0.435061,0,3.81658,-0.263097,-,-,0.151083,-0.452371,1.357991,1.961445
+Mar-16,Global Core,0.784001,0.207369,-,0.520704,-0.437654,0.755388,5.832966,-0.261806,-,-,-0.138272,-1.060545,1.706274,2.628547
+Mar-16,REITs,2.623038,4.745936,-1.96157,-,-0.161328,0,20.94617,-,-,-,-0.688842,-4.000722,5.934918,9.246798
+Mar-16,EM Currency,4.333348,2.059749,-,-,-,2.273599,10.05028,0,-,-,2.744259,1.15517,5.922437,7.511526
+Mar-16,Commodities,2.135276,-,-,-4.576235,4.475993,0,16.354551,-,-0.486845,2.722364,-0.450606,-3.036488,4.721158,7.30704
+Mar-16,US Tips,0.896065,0.631265,-,0.582214,-0.317413,0,6.181177,0,-,-,-0.081265,-1.058595,1.873395,2.850725
+Mar-16,High Yield,2.865763,4.015753,-,1.897139,-0.285802,0,9.606035,-2.761327,-,-,1.346916,-0.171931,4.38461,5.903457
+Mar-16,EM (Non-Local) Debt,3.260411,3.184361,-,1.33516,-0.488866,0,9.055424,-0.770244,-,-,1.828623,0.396835,4.692199,6.123987
+Mar-16,Bank Loans,1.982627,2.166903,-,0.838691,-0.026222,0,8.264638,-0.996745,-,-,0.675873,-0.630881,3.289381,4.596135
+Mar-16,EM (Local) Debt,4.797001,2.734502,-,0.410646,-0.39681,2.273599,17.18996,-0.224936,-,-,2.07903,-0.638941,7.514972,10.232943
+Mar-16,US Cash Rate,-0.486845,-0.486845,-,-,-,0,1.5,-,-,-,-0.724016,-0.961187,-0.249674,-0.012503
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+"As of 03/31/2016. Source: These expected returns are calculated by Research Affiliates LLC using data provided by MSCI Inc., Bloomberg, and Barclays.",,,,,,,,,,,,,,,
+"Volatility is measured as standard deviation. These forecasts are forward-looking statements based upon the reasonable beliefs of RA and are not a guarantee of future performance. This content is not investment or tax advice or an offer, sale or any solicitation of any offer to buy any security, derivative or any other financial instrument. Any use of the above content is subject to and conditioned upon the user's agreement with all important disclosures, disclaimers and provisions found at www.researchaffiliates.com/Pages/Legal.aspx. In the event the above content is provided or modified by a third-party, Research Affiliates LLC fully disclaims any responsibility or liability for such content. ©2016 Research Affiliates, LLC. All rights reserved. ",,,,,,,,,,,,,,,
