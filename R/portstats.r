@@ -40,6 +40,19 @@ portrisk<-function(w,cma){
     return(as.numeric(portvar(w,cma)^.5))
 }
 
-#' cma is a list that must have
-#' classes A list of class names
-#' nclasses
+#' Calculate the asset class weights across account types
+#'
+#' Tax-aware optimization produces weights for each asset class in each account type.  This function returns the weight of each asset class
+#' across all acount types (e.g. sum of cash in taxable, deferred and exempt accounts)
+#'
+#' @param w Weights of the assets in a portfolio
+#' @param cma.ta Tax-aware capital market assumptions.  
+#' @export
+#' @return value Vector of asset class weights
+#'
+calc.ac.wts<-function(w,cma.ta){
+    out<-w[1:(cma.ta$base.nclasses)]+w[(cma.ta$base.nclasses+1):(2*cma.ta$base.nclasses)]+
+                         w[(2*cma.ta$base.nclasses+1):(3*cma.ta$base.nclasses)]
+    names(out)<-cma.ta$base.classes
+    return(out)
+}
