@@ -69,6 +69,9 @@ The results is a set of weights across the 3N asset classes.
 About the Investor
 }
 \author{
-Rex Macey
+Rex Macey, \email{rex@macey.us}
 }
+\keyword{allocation}
+\keyword{asset}
+\keyword{portfolio}
 

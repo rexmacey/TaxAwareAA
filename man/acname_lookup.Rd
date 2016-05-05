@@ -2,10 +2,7 @@
 % Please edit documentation in R/rafi.r
 \name{acname_lookup}
 \alias{acname_lookup}
-\title{Look up asset class name in a table
-RAFI does not provide consistent names for their asset classes. That is the names in the
-return CSV file do not match the names in the correlation CSV.  Plus we may not prefer their names.
-This function is called to look up a RAFI name and return a preferred name.}
+\title{Look up asset class name in a table}
 \usage{
 acname_lookup(ac, type, ac_names)
 }
@@ -13,12 +10,13 @@ acname_lookup(ac, type, ac_names)
 \item{ac}{is the RAFI name of the asset class}
 
 \item{type}{is ret if the name comes from the return CSV else we assume it comes from the corr CSV}
+
+\item{ac_names}{is the table.  This is loaded in \code{\link{rafi.load}}}
 }
 \value{
 A character string with the name of the asset class
 }
 \description{
-Look up asset class name in a table
 RAFI does not provide consistent names for their asset classes. That is the names in the
 return CSV file do not match the names in the correlation CSV.  Plus we may not prefer their names.
 This function is called to look up a RAFI name and return a preferred name.

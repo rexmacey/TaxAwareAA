@@ -7,7 +7,7 @@
 #'
 #' @param rafi.data.loc Folder in which the CSV files are located
 #' @param acnametable Name of csv file containing asset class details
-#' @param inflation rate. Default calls the function
+#' @param inflation rate Default calls the function
 #'   \code{\link{Get10YrBEInflationRate}}
 #' @keywords asset allocation efficient frontier
 #' @export
@@ -66,13 +66,14 @@ rafi.cma<-function(rafi.data.loc,acnametable="acname_table.csv",
 #' @return A list with four items: ret is the return data, corr is the correlation matrix and
 #' as_of_date is the date of the assumptionsfrom the csv file, nclasses is the number of classes
 #'   correlation data
+#'   
 rafi.load<-function(rafi.data.loc,acnametable="acname_table.csv"){
     # The order and text of the asset class names of the returns and correlations may not match.  We want the classes to be
     # in the same order and have corresponding names.
     # A csv file is used to lookup new names for the asset classes. It also contains other information
     ac_names<-read.csv(file=paste0(rafi.data.loc,acnametable),stringsAsFactors = FALSE)
     #first.constraint.col<-match("Max",colnames(ac_names))+1 # Constraints begin after Max Col
-    rafi<-RAFI.read.csv(rafi.data.loc)
+    rafi<-rafi.read.csv(rafi.data.loc)
     rafi$ret[rafi$ret=="-"]<-0 # converts hyphens to zeros
     idx<-is.na(rafi$ret[,"Expected.Return.."])
     rafi$ret<-rafi$ret[!idx,] #remove extraneous rows
@@ -91,17 +92,18 @@ rafi.load<-function(rafi.data.loc,acnametable="acname_table.csv"){
 }
 
 #' Read RAFI csv files
-#'
-#' This function reads a set of returns and correlations from CSV files
-#' downloaded from the RAFI website.  No processing is done. This function
+#' 
+#' This function reads a set of returns and correlations from CSV files 
+#' downloaded from the RAFI website.  No processing is done. This function 
 #' allows one to see the data in an unprocessed form.
-#'
+#' 
 #' @param rafi.data.loc folder in which the CSV files are located
 #' @keywords asset allocation efficient frontier
 #' @export
-#' @return A list with two items: ret is the return data, corr is the
+#' @return value A list with two items: ret is the return data, corr is the 
 #'   correlation data
-RAFI.read.csv<-function(rafi.data.loc){
+#'   
+rafi.read.csv<-function(rafi.data.loc){
     out<-list()
     out$ret<-read.csv(paste0(rafi.data.loc,"core_asset_class_expected_returns.csv"),stringsAsFactors = FALSE)
     out$corr<-read.csv(paste0(rafi.data.loc,"core_asset_class_correlations_forecasted.csv"),stringsAsFactors = FALSE)
@@ -109,14 +111,16 @@ RAFI.read.csv<-function(rafi.data.loc){
 }
 
 #' Look up asset class name in a table
+#' 
 #' RAFI does not provide consistent names for their asset classes. That is the names in the
 #' return CSV file do not match the names in the correlation CSV.  Plus we may not prefer their names.
 #' This function is called to look up a RAFI name and return a preferred name.
 #'
 #' @param ac is the RAFI name of the asset class
 #' @param type is ret if the name comes from the return CSV else we assume it comes from the corr CSV
-#' @ac_names is the table.  This is loaded in \code{\link{RAFI.load}}
+#' @param ac_names is the table.  This is loaded in \code{\link{rafi.load}}
 #' @return A character string with the name of the asset class
+#' 
 acname_lookup<-function(ac,type,ac_names){
     #type is ret or corr for rafi_corr_class_name or rafi_ret_class_name
     if (type=="ret"){

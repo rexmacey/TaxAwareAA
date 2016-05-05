@@ -12,7 +12,7 @@ rafi.cma(rafi.data.loc, acnametable = "acname_table.csv",
 
 \item{acnametable}{Name of csv file containing asset class details}
 
-\item{inflation}{rate. Default calls the function
+\item{inflation}{rate Default calls the function
 \code{\link{Get10YrBEInflationRate}}}
 }
 \value{

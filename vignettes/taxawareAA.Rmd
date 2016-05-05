@@ -92,7 +92,7 @@ Let's load a set of capital market assumptions and describe it. The following co
 ```{r}
 
 #cma<-readRDS("./vignettes/sample cma.rds") # loads a cma data
-load(file="sample cma.rdata")
+load(file="sample_cma.rdata")
 str(cma) # show structure
 ```
 
@@ -157,9 +157,8 @@ knitr::kable(round(100*eff,1))
 First, let's just look at the weightings of the asset classes along the frontier across all accounts. Then let's see the weights by account type.
 ```{r, fig.show='hold'}
 # across all accounts
-w.ac<-round(100*(eff[,3:(cma.ta$base.nclasses+2)]+eff[,(cma.ta$base.nclasses+3):(2*cma.ta$base.nclasses+2)]+
-                                     eff[,(2*cma.ta$base.nclasses+3):(3*cma.ta$base.nclasses+2)]),1)
-colnames(w.ac)<-cma.ta$base.classes
+w.ac<-t(round(100*apply(eff[,3:ncol(eff)],1,calc.ac.wts,cma.ta),1))
+
 EffPt17<-w.ac[17,] # for later
 idx<- colSums(w.ac)!=0
 w.ac<-w.ac[,idx]
