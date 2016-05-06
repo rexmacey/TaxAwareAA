@@ -5,7 +5,7 @@ Authors@R: person("Rex", "Macey", email = "rex@macey.us", role = c("aut", "cre")
 Description: Creats a mean variant efficient portfolio considering taxes.
 Depends:
     R (>= 3.1.2)
-License: GNU GPL3
+License: GPL-3
 LazyData: true
 RoxygenNote: 5.0.1
 Imports: quadprog, MASS, Quandl, xts,

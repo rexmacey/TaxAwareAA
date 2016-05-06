@@ -63,7 +63,10 @@
 #'
 #' @docType package
 #' @name TaxAwareAA
-#' @author Rex Macey, \email{rex@macey.us}
+#' @author Rex Macey, \email{rex@@macey.us}
 #' @keywords asset allocation portfolio
-#'
+#' @importFrom Matrix nearPD
+#' @importFrom quadprog solve.QP
+#' @importFrom linprog solveLP
+#' @importFrom Quandl Quandl
 NULL
