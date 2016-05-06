@@ -18,7 +18,7 @@
 #'   correlation matrix, and/or cov for the covariance matrix and nconstraints for the number of
 #'   constraints.
 rafi.cma<-function(rafi.data.loc,acnametable="acname_table.csv",
-                   inflation.rate=Get10YrBEInflationRate()){
+                   inflation.rate=Get10YrBEInflationRate()$rate){
     ac_names<-read.csv(file=paste0(rafi.data.loc,acnametable),stringsAsFactors = FALSE)
     first.constraint.col<-match("Max",colnames(ac_names))+1 # Constraints begin after Max Col
     row.names(ac_names)<-ac_names$rt_class_names
