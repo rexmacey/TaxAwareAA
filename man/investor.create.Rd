@@ -22,24 +22,24 @@ investor.create(value.taxable, value.deferred, value.exempt, horizon = 10,
 
 \item{taxrate.ordinc}{Federal tax rate on ordinary income. Default is 0.}
 
-\item{taxrate.LTCG}{Federal tax rate on long-term capital gains. Default is
+\item{taxrate.LTCG}{Federal tax rate on long-term capital gains. Default is 
 0.}
 
-\item{taxrate.STCG}{Federal tax rate on short-term capital gains. Default is
+\item{taxrate.STCG}{Federal tax rate on short-term capital gains. Default is 
 0.}
 
 \item{taxrate.qualdiv}{Federal tax rate qualified dividends. Default is 0.}
 
-\item{taxrate.surcharge}{Net investment income tax rate (section 1411 of
+\item{taxrate.surcharge}{Net investment income tax rate (section 1411 of 
 IRC). Default is 0.038.}
 
-\item{income}{Income level. Might be used for looking up tax rates. Default
+\item{income}{Income level. Might be used for looking up tax rates. Default 
 is NULL}
 }
 \value{
-A list containing items related to the investor. This package
-  internally calculate income and capital gain rates that combine federal,
-  state and surcharge taxes.
+An investor class object which is a list containing items related to
+  the investor. This package internally calculate income and capital gain
+  rates that combine federal, state and surcharge taxes.
 }
 \description{
 This function creates an investor object.
