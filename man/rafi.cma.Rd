@@ -5,7 +5,7 @@
 \title{Load RAFI data into a cma}
 \usage{
 rafi.cma(rafi.data.loc, acnametable = "acname_table.csv",
-  inflation.rate = Get10YrBEInflationRate())
+  inflation.rate = Get10YrBEInflationRate()$rate)
 }
 \arguments{
 \item{rafi.data.loc}{Folder in which the CSV files are located}
