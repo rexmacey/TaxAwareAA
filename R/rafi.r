@@ -1,22 +1,22 @@
 #' Load RAFI data into a cma
-#'
-#' This function reads a set of returns and correlations from CSV files
-#' downloaded from the RAFI website.  Since RAFI may change its file formats,
+#' 
+#' This function reads a set of returns and correlations from CSV files 
+#' downloaded from the RAFI website.  Since RAFI may change its file formats, 
 #' this function may not work as expected in the future. This data takes the raw
 #' RAFI estimates and massages the.
-#'
+#' 
 #' @param rafi.data.loc Folder in which the CSV files are located
 #' @param acnametable Name of csv file containing asset class details
-#' @param inflation rate Default calls the function
+#' @param inflation rate Default calls the function 
 #'   \code{\link{Get10YrBEInflationRate}}
 #' @keywords asset allocation efficient frontier
 #' @export
-#' @return A list containing the as_of_date of the assumptions, the nclasses
-#'   (number of classes), ac.data which is a table in which each row represents
-#'   and asset class and columns contain return, risk and tax information.  This
-#'   table also includes box and custom constraints There is also corr the
-#'   correlation matrix, and/or cov for the covariance matrix and nconstraints for the number of
-#'   constraints.
+#' @return A cma object which is a list containing the as_of_date of the
+#'   assumptions, the nclasses (number of classes), ac.data which is a table in
+#'   which each row represents and asset class and columns contain return, risk
+#'   and tax information.  This table also includes box and custom constraints
+#'   There is also corr the correlation matrix, and/or cov for the covariance
+#'   matrix and nconstraints for the number of constraints.
 rafi.cma<-function(rafi.data.loc,acnametable="acname_table.csv",
                    inflation.rate=Get10YrBEInflationRate()$rate){
     ac_names<-read.csv(file=paste0(rafi.data.loc,acnametable),stringsAsFactors = FALSE)
@@ -24,7 +24,8 @@ rafi.cma<-function(rafi.data.loc,acnametable="acname_table.csv",
     row.names(ac_names)<-ac_names$rt_class_names
     rafi.data<-rafi.load(rafi.data.loc,acnametable)
     ac_names<-ac_names[rafi.data$ret$Asset.class,] #re order to match ret which should match corr
-    arith.ret<-rafi.data$ret$Expected.Return../100 +inflation.rate + (rafi.data$ret$Volatility../100)^2/2
+    arith.ret<-rafi.data$ret$Expected.Return../100 +inflation.rate + 
+        (rafi.data$ret$Volatility../100)^2/2 - ac_names$Expense
     arith.yield<-rafi.data$ret$Yield../100
     idx<-arith.yield<=0
     arith.yield[idx]<-arith.yield[idx]+inflation.rate
@@ -50,6 +51,7 @@ rafi.cma<-function(rafi.data.loc,acnametable="acname_table.csv",
     #out$boxMax<-cma$ac.data[,"Max"]
     #names(out$boxMax)<-cma$classes
     out$nconstraints<-nconstraints
+    class(out)<-"cma"
     return(out)
 }
 
