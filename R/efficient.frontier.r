@@ -1,18 +1,18 @@
 #' Create an efficient frontier
-#'
-#' This function creates a mean-variant efficient frontier given a set of
+#' 
+#' This function creates a mean-variant efficient frontier given a set of 
 #' capital market assumptions.
-#'
+#' 
 #' @param cma.ta Tax-aware capital market assumptions
 #' @param n.portfolios Number of portfolios (points) to produce on the frontier.
-#'   Output will have one less point if the minimum return portfolio is
+#'   Output will have one less point if the minimum return portfolio is 
 #'   inefficient.
 #' @keywords asset allocation efficient frontier
 #' @export
-#' @return A matrix. Each row is a point on the frontier.  The first column is
-#'   the return. The second column is the standard deviation. Subsequent columns
-#'   are asset class weights.
-#'
+#' @return An eff object which is a matrix. Each row is a point on the frontier.
+#'   The first column is the return. The second column is the standard
+#'   deviation. Subsequent columns are asset class weights.
+#'   
 efficient.frontier<-function(cma.ta,n.portfolios=25){
     nclasses<-cma.ta$nclasses
     minmax<-find.minmax.return(cma.ta)
@@ -28,6 +28,7 @@ efficient.frontier<-function(cma.ta,n.portfolios=25){
     #remove first point if inefficient
     if (out[1,"Risk"]>=out[2,"Risk"]) out<-out[2:n.portfolios,]
     rownames(out)<-paste0("EffPt",seq(1,nrow(out)))
+    class(out)<-"eff"
     return(out)
 }
 
@@ -243,4 +244,75 @@ resample.target.risk<-function(target.risk,cma.ta,n.samples=100,thresh=0){
     out$w<-colMeans(resamp.mat[,3:ncol(resamp.mat)])
     out$mat<-resamp.mat
     return(out)
+}
+
+#' Combine asset class weights from different account types.
+#' 
+#' Adds the weights, by asset class, of taxable, deferred and exempt accounts
+#'
+#' @param x Eff object - efficient frontier 
+#' @param suppress.zero TRUE to suppress output of asset classes with no weights.
+#'
+#' @return Plot of efficient frontier
+#' @export
+#'
+
+combine.class.wts<-function(x,suppress.zero=FALSE){
+    w<-x[,3:ncol(x)]
+    nclasses<-ncol(w)/3 # number of asset classes in base
+    out<-w[,1:(nclasses)]+w[,(nclasses+1):(2*nclasses)]+
+        w[,(2*nclasses+1):(3*nclasses)]
+    out<-round(out*100,1)
+    colnames(out)<-gsub("-taxed","",colnames(w)[1:(nclasses)])
+    if (suppress.zero){
+        idx<-colSums(out)>0
+        out<-out[,idx]
+    }
+    return(out)
+}
+
+#' Plot efficient frontier
+#'
+#' @param x Efficient frontier object
+#' @param ... 
+#'
+#' @return plot
+#' @export
+#'
+plot.eff<-function(x, ...){
+    plot(round(x[,"Risk"]*100,2),round(x[,"Return"]*100,2),main="Efficient Frontier",col="blue",
+         xlab="Std. Dev. %",ylab="After-Tax Return %",type="l")
+}
+
+#' Print Efficient Frontier
+#' 
+#' @param x  Efficient frontier object
+#' @param content Level of detail of output.  'brief' only shows risk and
+#'   return, 'combined' adds base asset classes, 'detailed' includes asset
+#'   classes at account level.
+#' @param kable TRUE returns result of the knitr kable function.
+#' @param ... Additional named values.
+#'   
+#' @return
+#' @export
+#' 
+print.eff<-function(x, 
+                    content=c("","brief","combined","detailed"), 
+                    kable=TRUE, ...){
+    params = list()
+    params$content <- match.arg(content)
+    out<-data.frame(Risk=round(x[,"Risk"]*100,1),Return=round(x[,"Return"]*100,1))
+    if (params$content=="detailed"){
+        out<-cbind(out,round(x[,3:ncol(x)]*100,1))
+    }
+    if (params$content=="combined"){
+        out<-cbind(out,round(combine.class.wts(x,...)*100,1))
+    }
+    if (kable){
+        require(knitr)
+        return(knitr::kable(out,caption="Table of Efficient Points"))
+    } else {
+        return(out)
+    }
+    print(out)
 }
