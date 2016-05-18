@@ -12,20 +12,20 @@ rafi.cma(rafi.data.loc, acnametable = "acname_table.csv",
 
 \item{acnametable}{Name of csv file containing asset class details}
 
-\item{inflation}{rate Default calls the function
+\item{inflation}{rate Default calls the function 
 \code{\link{Get10YrBEInflationRate}}}
 }
 \value{
-A list containing the as_of_date of the assumptions, the nclasses
-  (number of classes), ac.data which is a table in which each row represents
-  and asset class and columns contain return, risk and tax information.  This
-  table also includes box and custom constraints There is also corr the
-  correlation matrix, and/or cov for the covariance matrix and nconstraints for the number of
-  constraints.
+A cma object which is a list containing the as_of_date of the
+  assumptions, the nclasses (number of classes), ac.data which is a table in
+  which each row represents and asset class and columns contain return, risk
+  and tax information.  This table also includes box and custom constraints
+  There is also corr the correlation matrix, and/or cov for the covariance
+  matrix and nconstraints for the number of constraints.
 }
 \description{
-This function reads a set of returns and correlations from CSV files
-downloaded from the RAFI website.  Since RAFI may change its file formats,
+This function reads a set of returns and correlations from CSV files 
+downloaded from the RAFI website.  Since RAFI may change its file formats, 
 this function may not work as expected in the future. This data takes the raw
 RAFI estimates and massages the.
 }

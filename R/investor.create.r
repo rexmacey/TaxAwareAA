@@ -64,6 +64,20 @@ print.investor<-function(x, ...){
     tax$Tax<-format(tax$Tax,justify="left") 
     tax$Rate<-prettyNum(tax$Rate*100,format="f",digits=4,nsmall=2)
     print(av,row.names=FALSE)
+    cat("\n")
     print(tax,row.names=FALSE)
-    print(paste("Time horizon is ",x["horizon"],"years."))
+    cat("\n")
+    cat(paste("Time horizon is ",x["horizon"],"years."))
+    cat("\n")
+}
+
+#' Initial value in investor accounts
+#'
+#' @param investor Investor object
+#'
+#' @return Sum of taxable, deferred and exempt values
+#' @export
+#'
+investor.value<-function(investor){
+    return(investor["taxed"]+investor["deferred"]+investor["exempt"])
 }

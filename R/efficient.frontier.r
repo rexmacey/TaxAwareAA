@@ -207,14 +207,14 @@ resample.target.risk<-function(target.risk,cma.ta,n.samples=100,thresh=0){
                 targetret<-try(uniroot(fun,c(minmax$min$opt+.0005,minmax$max$opt),cmf.x=cmf.resamp)$root,silent = TRUE)
                 result_type<-class(targetret)
                 if (result_type=="try-error"){
-                    print(paste("uniroot error",iter.uniroot))
+                    #print(paste("uniroot error",iter.uniroot))
                     iter.uniroot<-iter.uniroot+1
                 } else {iter.uniroot<-1}
                 if (result_type!="try-error"){
                     sol<-try(optimize.target.return(targetret,cmf.resamp)$solution,silent = TRUE)
                     result_type<-class(sol)
                     if (result_type=="try-error"){
-                        print(paste("opttarget error",iter.opttarget))
+                        #print(paste("opttarget error",iter.opttarget))
                         iter.opttarget<-iter.opttarget+1
                     }
                 }
@@ -226,7 +226,7 @@ resample.target.risk<-function(target.risk,cma.ta,n.samples=100,thresh=0){
         w<-colMeans(resamp.mat[,3:ncol(resamp.mat)]) #resampling wt is mean weight of each class across the samples
         w.ac<-rowSums(matrix(w,ncol=3)) # wts of base asset classes across account type
         idx <- cmf.resamp$boxMin==0 & w.ac<thresh & w.ac>tol
-        print(paste("Iteration",iteration," sumidx",sum(idx)))
+        #print(paste("Iteration",iteration," sumidx",sum(idx)))
         # if all the asset classes with boxmin!=0 are above threshold then sum of idx will be zero
         stop.crit <- sum(idx)==0 | iteration>cmf.resamp$base.nclasses
         if (! stop.crit){
@@ -237,7 +237,7 @@ resample.target.risk<-function(target.risk,cma.ta,n.samples=100,thresh=0){
             temp[w.ac<=tol]<-Inf
             ac.tozero<-which.min(temp)
             cmf.resamp$boxMax[ac.tozero]<-0
-            print(paste("boxmax",sum(cmf.resamp$boxMax>0)))
+            #print(paste("boxmax",sum(cmf.resamp$boxMax>0)))
         }
     }
     out<-list()
@@ -281,7 +281,7 @@ combine.class.wts<-function(x,suppress.zero=FALSE){
 #'
 plot.eff<-function(x, ...){
     plot(round(x[,"Risk"]*100,2),round(x[,"Return"]*100,2),main="Efficient Frontier",col="blue",
-         xlab="Std. Dev. %",ylab="After-Tax Return %",type="l")
+         xlab="Std. Dev. %",ylab="After-Tax Return %",type="l",...)
 }
 
 #' Print Efficient Frontier
@@ -291,6 +291,7 @@ plot.eff<-function(x, ...){
 #'   return, 'combined' adds base asset classes, 'detailed' includes asset
 #'   classes at account level.
 #' @param kable TRUE returns result of the knitr kable function.
+#' @param transpose TRUE returns a transpose of the output
 #' @param ... Additional named values.
 #'   
 #' @return
@@ -298,7 +299,7 @@ plot.eff<-function(x, ...){
 #' 
 print.eff<-function(x, 
                     content=c("","brief","combined","detailed"), 
-                    kable=TRUE, ...){
+                    kable=TRUE, transpose=FALSE, ...){
     params = list()
     params$content <- match.arg(content)
     out<-data.frame(Risk=round(x[,"Risk"]*100,1),Return=round(x[,"Return"]*100,1))
@@ -308,11 +309,11 @@ print.eff<-function(x,
     if (params$content=="combined"){
         out<-cbind(out,round(combine.class.wts(x,...)*100,1))
     }
+    if (transpose) out<-t(out)
     if (kable){
         require(knitr)
         return(knitr::kable(out,caption="Table of Efficient Points"))
     } else {
         return(out)
     }
-    print(out)
 }

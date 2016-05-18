@@ -1,6 +1,6 @@
 Package: TaxAwareAA
 Title: Tax Aware Asset Allocation
-Version: 0.0.0.9000
+Version: 0.0.0.9004
 Authors@R: person("Rex", "Macey", email = "rex@macey.us", role = c("aut", "cre"))
 Description: Creates a mean variant efficient portfolio considering taxes.
 Depends:

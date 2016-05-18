@@ -283,5 +283,53 @@ cma.ta.create<-function(cma,investor){
     out$base.classes<-cma$classes
     out$base.nclasses<-cma$nclasses
     out$account.values<-c(investor["taxed"],investor["deferred"],investor["exempt"])   #investor$account.values
+    class(out)<-"cma.ta"
     return(out)
+}
+
+#' Print cma.ta object
+#'
+#' @param cma.ta cma.ta object
+#' @param kable TRUE returns result of the knitr kable function.
+#' @param ... Additional print parameters
+#' @return object to print
+#' @export
+#'
+print.cma.ta<-function(cma.ta, kable=TRUE, ...){
+    nclasses.base<-cma.ta$base.nclasses
+    cat("As of",cma.ta$as_of_date,"\n" )
+    cat("Number of asset classes (per account type)",nclasses.base,"\n")
+    temp<-data.frame(matrix(cma.ta$ret*100,ncol=3))
+    temp<-cbind(temp,100*diag(matrix(cma.ta$cov,nrow = cma.ta$nclasses))[1:nclasses.base]^.5)
+    temp<-cbind(temp,cma.ta$boxMin*100,cma.ta$boxMax*100)
+    rownames(temp)<-cma.ta$base.classes
+    colnames(temp)<-c("Taxable Ret%","Deferred Ret%","Exempt Ret%","Risk%","MinWt","MaxWt")
+    temp<-round(temp,1)
+    if (kable){
+        require(knitr)
+        return(knitr::kable(temp,caption="Capital Market Assumptions"))
+    } else {
+        return(temp)
+    }
+}
+
+#' Print cma object
+#'
+#' @param cma cma object
+#'
+#' @return NULL
+#' @export
+#'
+print.cma<-function(cma){
+    cat("As of",cma$as_of_date,"\n" )
+    cat("Number of asset classes",cma$nclasses,"\n")
+    temp<-round(100*cma$ac.data[,c("ret","risk")],1)
+    colnames(temp)<-c("Return%","Risk%")
+    print(temp)
+    plot(cma$ac.data[,"risk"]*100,cma$ac.data[,"ret"]*100,
+         main="Asset Class Assumptions", xlab="Std Dev %", ylab="Return %",col="blue",pch=16)
+    loc<-100*cma$ac.data[,c("risk","ret")]
+    loc[,2]<-loc[,2]-0.25 #move down a bit
+    text(loc,cma$classes)
+    invisible(NULL)
 }
