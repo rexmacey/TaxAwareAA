@@ -60,7 +60,7 @@ print.investor<-function(x, ...){
                     Rate=c(x["OrdInc"],x["LTCG"],x["STCG"],x["QualDiv"],x["taxRState"]))
     rownames(tax)<-NULL
     av$Account<-format(av$Account,justify="left") 
-    av$Value<-prettyNum(av$Value,big.mark = ",")
+    av$Value<-prettyNum(round(av$Value,0),big.mark = ",")
     tax$Tax<-format(tax$Tax,justify="left") 
     tax$Rate<-prettyNum(tax$Rate*100,format="f",digits=4,nsmall=2)
     print(av,row.names=FALSE)
