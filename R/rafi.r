@@ -34,7 +34,7 @@ rafi.cma<-function(rafi.data.loc,acnametable="acname_table.csv",
     arith.val.change<-arith.ret-arith.yield-arith.growth
     ac.data<-data.frame(ret=arith.ret,yld=arith.yield,growth=arith.growth,
                         valChg=arith.val.change,risk=rafi.data$ret$Volatility../100)
-    ac.data<-cbind(ac.data,ac_names[rafi.data$ret$Asset.class,c("IntOrd","IntTE","DivQual","DivOrd","Turnover","LTCG","STCG","Min","Max")])
+    ac.data<-cbind(ac.data,ac_names[rafi.data$ret$Asset.class,c("IntOrd","IntTE","DivQual","DivOrd","Turnover","LTCG","STCG","ForeignTaxWithheld","Expense","Min","Max")])
     nconstraints<-ncol(ac_names)-first.constraint.col+1
     if (nconstraints>0) {
         ac.data<-cbind(ac.data,ac_names[rafi.data$ret$Asset.class,first.constraint.col:ncol(ac_names)])
