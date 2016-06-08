@@ -26,12 +26,15 @@ ATReturn.calc<-function(cma,investor){
         taxRState=investor["taxRState"],
         horizon=investor["horizon"]))
     out$at.return.deferred<-apply(cma$ac.data,1,function(x) ATReturn.deferred(
-        arith.ret=x["ret"],
+        yld=x["yld"], growth=x["growth"], valChg=x["valChg"],
+        foreigntaxwithheld=x["foreigntaxwithheld"],
         taxROrdInc=investor["OrdInc"],
         taxRState=investor["taxRState"],
-        horizon=investor["horizon"],
-        risk=x["risk"]))
-    out$at.return.exempt<-cma$ac.data$ret
+        risk=x["risk"],
+        horizon=investor["horizon"]))
+    out$at.return.exempt<-apply(cma$ac.data,1,function(x) ATReturn.exempt(
+        yld=x["yld"], growth=x["growth"], valChg=x["valChg"],
+        horizon=investor["horizon"]))
     names(out$at.return.exempt)<-names(out$at.return.deferred)
     return(out)
 }
@@ -131,9 +134,37 @@ ATReturn.taxable<-function(yld,growth,valChg,intOrd,intTE,divQual,divOrd,turnove
 #' @export
 #' @return The after-tax arithmetic return of an asset invested in taxable account.
 #'
-ATReturn.deferred<-function(arith.ret,taxROrdInc,taxRState=0,horizon,risk){
-    geom.ret<-arith.ret-risk^2/2
-    out<-((1+geom.ret)^horizon*(1-taxROrdInc-taxRState))^(1/horizon)-1
-    out<-out+risk^2/2
-    return(out)
+
+ATReturn.deferred<-function(yld,growth,valChg,foreigntaxwithheld,taxROrdInc,taxRState=0,risk,horizon=10){
+    out<-ATReturn.exempt(yld=yld,
+                         growth=growth,
+                         valChg = valChg,
+                         foreigntaxwithheld = foreigntaxwithheld,
+                         horizon=horizon)
+    out <- out - risk^2/2  # The geom return will be taxed, not the arith. 
+    out<-((1+out)^horizon*(1-taxROrdInc-taxRState))^(1/horizon)-1 # reduce by taxes
+    out<-out+risk^2/2 # convert back to arithmetic
 }
+
+ATReturn.exempt<-function(yld,growth,valChg,foreigntaxwithheld,horizon=10){
+    price<-100 # initialize value and basis and price to $100
+    shares<-1
+    v<-price*shares
+    div<-price*yld # dividend for Year=0
+    yield<-yld
+    for (i in 1:horizon){
+        div<-div*(1+growth) # Dividends per share
+        if (yld==0 | div==0) {
+            price<-(valChg+1)^i*100
+        } else{
+            price<-(valChg+1)^i / yld*div # (1+growth)^t * (Pbeg/Divbeg)*Divend
+        }
+        income<-v*yield # previous year's yield * value
+        taxIncome <- income * foreigntaxwithheld
+        yield <- div / price
+        shares <- shares + (income - taxIncome) / price
+        v <- price * shares
+    }
+    return((v / 100) ^ (1 / horizon) - 1)
+}
+
