@@ -27,13 +27,14 @@ ATReturn.calc<-function(cma,investor){
         horizon=investor["horizon"]))
     out$at.return.deferred<-apply(cma$ac.data,1,function(x) ATReturn.deferred(
         yld=x["yld"], growth=x["growth"], valChg=x["valChg"],
-        foreigntaxwithheld=x["foreigntaxwithheld"],
+        foreigntaxwithheld=x["ForeignTaxWithheld"],
         taxROrdInc=investor["OrdInc"],
         taxRState=investor["taxRState"],
         risk=x["risk"],
         horizon=investor["horizon"]))
     out$at.return.exempt<-apply(cma$ac.data,1,function(x) ATReturn.exempt(
         yld=x["yld"], growth=x["growth"], valChg=x["valChg"],
+        foreigntaxwithheld=x["ForeignTaxWithheld"],
         horizon=investor["horizon"]))
     names(out$at.return.exempt)<-names(out$at.return.deferred)
     return(out)
