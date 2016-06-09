@@ -294,7 +294,7 @@ plot.eff<-function(x, ...){
 #' @param transpose TRUE returns a transpose of the output
 #' @param ... Additional named values.
 #'   
-#' @return
+#' @return print object
 #' @export
 #' 
 print.eff<-function(x, 
