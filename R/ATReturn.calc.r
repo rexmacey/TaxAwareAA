@@ -14,7 +14,7 @@
 #'
 ATReturn.calc<-function(cma,investor){
     out<-list()
-    out$at.return.taxable<-apply(cma$ac.data,1,function(x) ATReturn.taxable(
+    out$at.return.taxable.geom<-apply(cma$ac.data,1,function(x) ATReturn.taxable(
         yld=x["yld"], growth=x["growth"], valChg=x["valChg"],
         intOrd=x["IntOrd"], intTE=x["IntTE"], divQual=x["DivQual"],
         divOrd=x["DivOrd"],
@@ -25,18 +25,21 @@ ATReturn.calc<-function(cma,investor){
         taxRSTCG=investor["STCG"],
         taxRState=investor["taxRState"],
         horizon=investor["horizon"]))
-    out$at.return.deferred<-apply(cma$ac.data,1,function(x) ATReturn.deferred(
+    at.risk<-cma$ac.data$risk*(1-investor["LTCG"])
+    out$at.return.taxable<-out$at.return.taxable.geom + at.risk^2/2
+    out$at.return.deferred.geom<-apply(cma$ac.data,1,function(x) ATReturn.deferred(
         yld=x["yld"], growth=x["growth"], valChg=x["valChg"],
         foreigntaxwithheld=x["ForeignTaxWithheld"],
         taxROrdInc=investor["OrdInc"],
-        taxRState=investor["taxRState"],
         risk=x["risk"],
         horizon=investor["horizon"]))
-    out$at.return.exempt<-apply(cma$ac.data,1,function(x) ATReturn.exempt(
+    out$at.return.deferred<-out$at.return.deferred.geom + cma$ac.data$risk^2/2
+    out$at.return.exempt.geom<-apply(cma$ac.data,1,function(x) ATReturn.exempt(
         yld=x["yld"], growth=x["growth"], valChg=x["valChg"],
         foreigntaxwithheld=x["ForeignTaxWithheld"],
         horizon=investor["horizon"]))
-    names(out$at.return.exempt)<-names(out$at.return.deferred)
+    names(out$at.return.exempt.geom)<-names(out$at.return.deferred)
+    out$at.return.exempt<-out$at.return.exempt.geom + cma$ac.data$risk^2/2
     return(out)
 }
 
@@ -86,19 +89,19 @@ ATReturn.taxable<-function(yld,growth,valChg,intOrd,intTE,divQual,divOrd,turnove
     yield<-div/price
     for (i in 1:horizon){
         div<-div*(1+growth) # Dividends per share
+        price.prev<-price
         if (yld==0 | div==0) {
             price<-(valChg+1)^i*100
         } else{
             price<-(valChg+1)^i / yld*div # (1+growth)^t * (Pbeg/Divbeg)*Divend
         }
         income<-v*yield # previous year's yield * value
-        unrealgl <- shares * price - v # previous shares * current price - previous value
-        taxIncome <- income * (intOrd * taxROrdInc + divQual * taxRQDiv + divOrd * taxROrdInc) +
-            income * (intOrd + divQual + divOrd) * taxRState
+        unrealgl <- shares * (price - price.prev) # previous shares * current price - previous value
+        taxIncome <- income * (intOrd * taxROrdInc + divQual * taxRQDiv + divOrd * taxROrdInc)
         valuesold <- (v + unrealgl) * turnover
         basissold <- b * turnover
         realgl <- valuesold - basissold
-        taxCG <- realgl * (LTCG * taxRLTCG + STCG * taxROrdInc) + realgl * taxRState
+        taxCG <- realgl * (LTCG * taxRLTCG + STCG * taxROrdInc)
         yield <- div / price
         shares <- shares + (income - taxIncome - taxCG) / price
         v <- price * shares
@@ -106,7 +109,7 @@ ATReturn.taxable<-function(yld,growth,valChg,intOrd,intTE,divQual,divOrd,turnove
     }
     # Adjust value for final sale. Assume all long term
     realgl <- v - b
-    taxCG <- realgl * (taxRLTCG + taxRState)
+    taxCG <- realgl * taxRLTCG
     v <- v - taxCG
     return(((v / 100) ^ (1 / horizon) - 1))
 }
@@ -136,15 +139,13 @@ ATReturn.taxable<-function(yld,growth,valChg,intOrd,intTE,divQual,divOrd,turnove
 #' @return The after-tax arithmetic return of an asset invested in taxable account.
 #'
 
-ATReturn.deferred<-function(yld,growth,valChg,foreigntaxwithheld,taxROrdInc,taxRState=0,risk,horizon=10){
+ATReturn.deferred<-function(yld,growth,valChg,foreigntaxwithheld,taxROrdInc,risk,horizon=10){
     out<-ATReturn.exempt(yld=yld,
                          growth=growth,
                          valChg = valChg,
                          foreigntaxwithheld = foreigntaxwithheld,
                          horizon=horizon)
-    out <- out - risk^2/2  # The geom return will be taxed, not the arith. 
-    out<-((1+out)^horizon*(1-taxROrdInc-taxRState))^(1/horizon)-1 # reduce by taxes
-    out<-out+risk^2/2 # convert back to arithmetic
+    # out<-((1+out)^horizon*(1-taxROrdInc))^(1/horizon)-1 # reduce by taxes
 }
 
 ATReturn.exempt<-function(yld,growth,valChg,foreigntaxwithheld,horizon=10){

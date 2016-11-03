@@ -23,7 +23,8 @@ portvar<-function(w,cma){
 #' @return value representing the variance of the portfolio
 #'
 portret<-function(w,cma){
-    return(as.numeric(sum(w*cma$ret)))
+    pvar<-portvar(w,cma.ta)
+    return(as.numeric(sum(w*cma$ret))-pvar/2)
 }
 
 #' Calculate the standard deviation of a portfolio

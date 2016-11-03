@@ -27,7 +27,7 @@ A cma object which is a list containing the as_of_date of the
 This function reads a set of returns and correlations from CSV files 
 downloaded from the RAFI website.  Since RAFI may change its file formats, 
 this function may not work as expected in the future. This data takes the raw
-RAFI estimates and massages the.
+RAFI estimates wihch are real geometric.
 }
 \keyword{allocation}
 \keyword{asset}

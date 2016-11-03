@@ -33,12 +33,19 @@ investor.create<-function(value.taxable,value.deferred,value.exempt,
                           taxrate.surcharge=0.038,
                           income=NULL){
     investor.values<-c(taxed=value.taxable,deferred=value.deferred,exempt=value.exempt)
+    
     taxrates<-c(OrdInc=(taxrate.ordinc+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
                 LTCG=(taxrate.LTCG+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
                 STCG=(taxrate.STCG+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
                 QualDiv=(taxrate.qualdiv+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
                 taxRState=taxrate.state)
+    temp <- value.deferred*(1-taxrates["OrdInc"])
+    names(temp)<-""
+    investor.values.at <- c(taxed.at = value.taxable,
+                            deferred.at = temp,
+                            exempt.at = value.exempt) 
     investor<-c(investor.values,
+                investor.values.at,
                 taxrates,horizon=horizon)
     class(investor)<-"investor"
     return(investor)
@@ -55,12 +62,14 @@ investor.create<-function(value.taxable,value.deferred,value.exempt,
 #'
 print.investor<-function(x, ...){
     av<-data.frame(Account=c("Taxable","Deferred","Exempt","Total"),
-                   Value=c(x["taxed"],x["deferred"],x["exempt"],x["taxed"]+x["deferred"]+x["exempt"]))
+                   "PreTaxValue"=c(x["taxed"],x["deferred"],x["exempt"],x["taxed"]+x["deferred"]+x["exempt"]),
+                   "AfterTaxValue"=c(x["taxed.at"],x["deferred.at"],x["exempt.at"],x["taxed.at"]+x["deferred.at"]+x["exempt.at"]))
     tax<-data.frame(Tax=unlist(strsplit("Ordinary Income, LT Cap Gain, ST Cap Gain, Qual Div, State",split = ",")),
                     Rate=c(x["OrdInc"],x["LTCG"],x["STCG"],x["QualDiv"],x["taxRState"]))
     rownames(tax)<-NULL
     av$Account<-format(av$Account,justify="left") 
-    av$Value<-prettyNum(round(av$Value,0),big.mark = ",")
+    av$PreTaxValue<-prettyNum(round(av$PreTaxValue,0),big.mark = ",")
+    av$AfterTaxValue<-prettyNum(round(av$AfterTaxValue,0),big.mark = ",")
     tax$Tax<-format(tax$Tax,justify="left") 
     tax$Rate<-prettyNum(tax$Rate*100,format="f",digits=4,nsmall=2)
     print(av,row.names=FALSE)
@@ -74,10 +83,14 @@ print.investor<-function(x, ...){
 #' Initial value in investor accounts
 #'
 #' @param investor Investor object
-#'
+#' @param tax "after" for after-tax values, otherwise before-tax
 #' @return Sum of taxable, deferred and exempt values
 #' @export
 #'
-investor.value<-function(investor){
-    return(investor["taxed"]+investor["deferred"]+investor["exempt"])
+investor.value<-function(investor,tax="after"){
+    if (tax=="after"){
+        return(investor["taxed.at"]+investor["deferred.at"]+investor["exempt.at"])
+    } else {
+        return(investor["taxed"]+investor["deferred"]+investor["exempt"])
+    }
 }

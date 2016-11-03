@@ -3,7 +3,7 @@
 #' This function reads a set of returns and correlations from CSV files 
 #' downloaded from the RAFI website.  Since RAFI may change its file formats, 
 #' this function may not work as expected in the future. This data takes the raw
-#' RAFI estimates and massages the.
+#' RAFI estimates wihch are real geometric. 
 #' 
 #' @param rafi.data.loc Folder in which the CSV files are located
 #' @param acnametable Name of csv file containing asset class details
@@ -24,16 +24,16 @@ rafi.cma<-function(rafi.data.loc,acnametable="acname_table.csv",
     row.names(ac_names)<-ac_names$rt_class_names
     rafi.data<-rafi.load(rafi.data.loc,acnametable)
     ac_names<-ac_names[rafi.data$ret$Asset.class,] #re order to match ret which should match corr
-    arith.ret<-rafi.data$ret$Expected.Return../100 +inflation.rate + 
-        (rafi.data$ret$Volatility../100)^2/2 - ac_names$Expense
-    arith.yield<-rafi.data$ret$Yield../100
-    idx<-arith.yield<=0
-    arith.yield[idx]<-arith.yield[idx]+inflation.rate
-    arith.growth<-rafi.data$ret$Growth../100
-    arith.growth[!idx]<-rafi.data$ret$Growth..[!idx]/100+inflation.rate
-    arith.val.change<-arith.ret-arith.yield-arith.growth
-    ac.data<-data.frame(ret=arith.ret,yld=arith.yield,growth=arith.growth,
-                        valChg=arith.val.change,risk=rafi.data$ret$Volatility../100)
+    geom.ret<-rafi.data$ret$Expected.Return../100 +inflation.rate - ac_names$Expense
+    arith.ret<-geom.ret + (rafi.data$ret$Volatility../100)^2/2
+    yield<-rafi.data$ret$Yield../100
+    idx<-yield<=0
+    yield[idx]<-yield[idx]+inflation.rate
+    growth<-rafi.data$ret$Growth../100
+    growth[!idx]<-rafi.data$ret$Growth..[!idx]/100+inflation.rate
+    val.change<-geom.ret-yield-growth
+    ac.data<-data.frame(ret=arith.ret,geom.ret=geom.ret,yld=yield,growth=growth,
+                        valChg=val.change,risk=rafi.data$ret$Volatility../100)
     ac.data<-cbind(ac.data,ac_names[rafi.data$ret$Asset.class,c("IntOrd","IntTE","DivQual","DivOrd","Turnover","LTCG","STCG","ForeignTaxWithheld","Expense","Min","Max")])
     nconstraints<-ncol(ac_names)-first.constraint.col+1
     if (nconstraints>0) {
@@ -131,4 +131,32 @@ acname_lookup<-function(ac,type,ac_names){
         i<-which(ac_names[,2]==ac)
     }
     return(ac_names[i,3])
+}
+
+#' Calculates the pre-tax return
+#' 
+#' Simulates the investment value without taxes
+#'
+#' @param yld is initial yield in decimal (e.g. 0.03 for 3%)
+#' @param growth is the annual growth rate of the income in decimal.
+#' @param valchange is the annual percentage change in the valuation in decimal
+#' @param horizon number of years to simulate
+#' @return Pretax annaul return in decimal
+#' 
+pretax_return<-function(yld, growth, valchange,horizon=10){
+    price<-100
+    div0<-yld*price
+    div<-div0
+    shares<-1
+    for (i in 1:horizon){
+        div<-div*(1+growth)
+        if (div==0 | div0==0){
+            price<-(valchange+1)^i*100
+        } else {
+            price<-(valchange+1)^i*100/div0*div
+        }
+        income<-div*shares
+        shares<-shares+income/price
+    }
+    return((shares*price/100)^(1/horizon)-1)
 }

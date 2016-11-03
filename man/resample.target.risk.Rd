@@ -4,7 +4,8 @@
 \alias{resample.target.risk}
 \title{Use resampling to find an efficient portfolio}
 \usage{
-resample.target.risk(target.risk, cma.ta, n.samples = 100, thresh = 0)
+resample.target.risk(target.risk, cma.ta, n.samples = 100, thresh = 0,
+  tol = 4e-05)
 }
 \arguments{
 \item{target.risk}{The target risk for which to find an efficient portfolio.}
@@ -15,6 +16,8 @@ resample.target.risk(target.risk, cma.ta, n.samples = 100, thresh = 0)
 
 \item{thresh}{The minimum weight for an asset class (if the assumptions do
 not specify another minimum)}
+
+\item{tol}{Tolerance to pass to Optimize Target Return}
 }
 \value{
 A list with two items.  The first item w is the weights of the

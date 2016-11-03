@@ -5,14 +5,15 @@ REITs,REITs,REIT,0,0,0,1,0.1,0.9,0.1,0,0.0025,0,0.25,0,-0.1
 ST US Treas,ST.US.Treas,STUSTsy,1,0,0,0,1,0.5,0.5,0,0.001,0,1,0,0.9
 LT US Treas,LT.US.Treas,LTUSTsy,1,0,0,0,1,0.5,0.5,0,0.002,0,0.25,0,0.9
 High Yield,High.Yield,HiYld,1,0,0,0,1,0.5,0.5,0,0.0025,0,0.2,0,-0.1
-US Core,US.Core,USCore,1,0,0,0,1,0.5,0.5,0,0.0025,0,1,0,-0.1
+US Core,US.Core,USCoreBonds,1,0,0,0,1,0.5,0.5,0,0.0025,0,1,0,0.9
 EM (Non-Local) Debt,EM..Non.Local..Debt,EMNonLclDebt,1,0,0,0,1,0.5,0.5,0,0.005,0,0.15,0,-0.1
-EM Currency,EM.Currency,EMCurrency,1,0,0,0,1,0.5,0.5,0,0.006,0,0.15,0,-0.1
+EM Currency,EM.Currency,EMCurrency,1,0,0,0,1,0.5,0.5,0,0.006,0,0.05,0,-0.1
 Bank Loans,Bank.Loans,BankLoans,1,0,0,0,1,0.5,0.5,0,0.0065,0,0.15,0,-0.1
 US Cash Rate,US.Cash.Rate,USCash,1,0,0,0,1,0.5,0.5,0,0,0.01,1,0,0.9
 Commodities,Commodities,Commodities,1,0,0,0,1,0.6,0.4,0,0.009,0,0.1,0,-0.1
 US Tips,US.Tips,USTIPs,1,0,0,0,1,0.5,0.5,0,0.0025,0,1,0,0.9
 EAFE Equity,EAFE.Equity,EAFEEquity,0,0,0.97,0.03,0.2,0.9,0.1,0.05,0.0035,0,0.4,-0.4,-0.1
-EM Equity,EM.Equity,EMEquity,0,0,1,0,0.25,0.9,0.1,0.2,0.0035,0,0.25,-0.4,-0.1
+EM Equity,EM.Equity,EMEquity,0,0,1,0,0.25,0.9,0.1,0.12,0.0035,0,0.25,-0.4,-0.1
 Global Core,Global.Core,GlobalCore,1,0,0,0,1,0.5,0.5,0,0.009,0,1,0,-0.1
 EM (Local) Debt,EM..Local..Debt,EMLocalDebt,1,0,0,0,1,0.5,0.5,0,0.011,0,0.15,0,-0.1
+Munis,Munis,Munis,0,1,0,0,0.1,1,0,0,0.002,0,1,0,0.9

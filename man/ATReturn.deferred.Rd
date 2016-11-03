@@ -4,19 +4,20 @@
 \alias{ATReturn.deferred}
 \title{Calculation of after-tax return in a deferred account}
 \usage{
-ATReturn.deferred(arith.ret, taxROrdInc, taxRState = 0, horizon, risk)
+ATReturn.deferred(yld, growth, valChg, foreigntaxwithheld, taxROrdInc, risk,
+  horizon = 10)
 }
 \arguments{
-\item{arith.ret}{Pre-tax geometric return.  The geometric return is used because
-this is the rate at which the asset will grow over time.}
-
 \item{taxROrdInc}{Tax rate on ordinary income}
 
-\item{taxRState}{State income tax rate}
+\item{risk}{Standard deviation of asset class.}
 
 \item{horizon}{Number of year in forecast horizon}
 
-\item{risk}{Standard deviation of asset class.}
+\item{arith.ret}{Pre-tax geometric return.  The geometric return is used because
+this is the rate at which the asset will grow over time.}
+
+\item{taxRState}{State income tax rate}
 }
 \value{
 The after-tax arithmetic return of an asset invested in taxable account.

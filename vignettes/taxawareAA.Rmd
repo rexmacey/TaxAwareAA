@@ -98,24 +98,26 @@ str(cma) # show structure
 
 Within the ac.data table there are 13 required (Req.) columns and a few optional ones.
 
-Column          | Req. | Description
---------------- | ---- | ------------------------------------------------------
-ret             | No   | Arithmetic total return. In decimal.
-yld             | Yes  | Yield 
-growth          | Yes  | Growth rate of dividend  
-valChg          | Yes  | Valuation change over horizon  
-risk            | Yes  | Standard deviation  
-IntOrd          | Yes  | Pct of income taxed at ordinary income rate
-IntTE           | Yes  | Pct of income exempt from tax
-DivQual         | Yes  | Pct of income taxed at qualified dividend rate
-DivOrd          | Yes  | Pct of income taxed at ordinary dividend rate
-Turnover        | Yes  | Pct of asset class sold during year
-LTCG            | Yes  | Pct of capital gains taxed at long term rate
-STCG            | Yes  | Pct of capital gains taxed at short term rate
-Min             | Yes  | Minimum weight of class
-Max             | Yes  | Maximum weight of class        
-MinDomEqRel     | No   | Example of a user-defined constraint
-MinQualFI       | No   | Example of a user-defined constraint
+Column             | Req. | Description
+---------------    | ---- | ------------------------------------------------------
+ret                | No   | Arithmetic total return. In decimal.
+yld                | Yes  | Yield 
+growth             | Yes  | Growth rate of dividend  
+valChg             | Yes  | Valuation change over horizon  
+risk               | Yes  | Standard deviation  
+IntOrd             | Yes  | Pct of income taxed at ordinary income rate
+IntTE              | Yes  | Pct of income exempt from tax
+DivQual            | Yes  | Pct of income taxed at qualified dividend rate
+DivOrd             | Yes  | Pct of income taxed at ordinary dividend rate
+Turnover           | Yes  | Pct of asset class sold during year
+LTCG               | Yes  | Pct of capital gains taxed at long term rate
+STCG               | Yes  | Pct of capital gains taxed at short term rate
+ForeignTaxWithheld | Yes  | Pct of income withheld for foreign taxes
+Expense            | Yes  | Expense ratio of fund, reduces return
+Min                | Yes  | Minimum weight of class
+Max                | Yes  | Maximum weight of class        
+MinDomEqRel        | No   | Example of a user-defined constraint
+MinQualFI          | No   | Example of a user-defined constraint
 
 While before tax total return (**ret**) may seem important, to calculate after-tax return we need to understand the components of that return. That's why **yld**, **growth** and **valChg** are required.  With those we do not need the total return which is the sum of these components.  Note that the return and risk information is supplied in decimal, not percent.
 
@@ -150,7 +152,9 @@ plot(eff[,"Risk"],eff[,"Return"],main="Efficient Frontier",col="blue",xlab="Std.
 ```
 
 ```{r, echo=FALSE, results='asis'}
+class(eff)<-"matrix"
 knitr::kable(round(100*eff,1))
+class(eff)<-"eff"
 ```
 
 ## Asset Class Weights along the Frontier

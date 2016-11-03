@@ -10,7 +10,7 @@
 #' @keywords asset allocation efficient frontier
 #' @export
 #' @return An eff object which is a matrix. Each row is a point on the frontier.
-#'   The first column is the return. The second column is the standard
+#'   The first column is the geometric return. The second column is the standard
 #'   deviation. Subsequent columns are asset class weights.
 #'   
 efficient.frontier<-function(cma.ta,n.portfolios=25){
@@ -28,6 +28,8 @@ efficient.frontier<-function(cma.ta,n.portfolios=25){
     #remove first point if inefficient
     if (out[1,"Risk"]>=out[2,"Risk"]) out<-out[2:n.portfolios,]
     rownames(out)<-paste0("EffPt",seq(1,nrow(out)))
+    #adjust returns from arith to geom
+    out[,1]<-out[,1] - out[,2]^2/2
     class(out)<-"eff"
     return(out)
 }
@@ -43,7 +45,7 @@ efficient.frontier<-function(cma.ta,n.portfolios=25){
 #'  @param cma.ta Tax-aware capital market assumptions
 #'  @keywords tax-aware efficient frontier
 #'  @return  value A two item list containing min and max each of which are produced by
-#'    solveLP. The opt value is the min or max return respectively
+#'    solveLP. The opt value is the min or max return respectively. Arithmetic.
 #'  @export
 #'  @seealso \code{\link[linprog]{solveLP}}
 #'  @keywords find.minmax.return()
@@ -61,7 +63,7 @@ find.minmax.return<-function(cma.ta){ # return min and max expected returns that
     cmf.cons.mat<-matrix(unlist(cma.ta$constraints),ncol=nconstraints.cmf)
     boxmat<-diag(nclasses.cmf)
     boxmat<-cbind(boxmat,boxmat,boxmat)
-    tol<-0.00004 #tolerance
+    tol<-0.000002 #tolerance
     A<-matrix(1,1,nclasses) # full investment with tol
     A<-rbind(A, # Full investment
              c(rep(1,nclasses.cmf),rep(0,nclasses.cmf),rep(0,nclasses.cmf)), # allocation to taxable
@@ -86,7 +88,7 @@ find.minmax.return<-function(cma.ta){ # return min and max expected returns that
     return(out)
 }
 
-#' Find the portfolio with the minimum standard deviation given a target return
+#' Find the portfolio with the minimum standard deviation given a target arithmetic return
 #' and a set of capital market assumptions
 #'
 #' This function is used to create an efficient frontier which iterates across a
@@ -94,12 +96,13 @@ find.minmax.return<-function(cma.ta){ # return min and max expected returns that
 #'
 #' @param target.ret The target return.  Should be a feasible return.
 #' @param cma.ta Tax-aware capital market assumptions
+#' @param tol Tolerance for constraints.
 #' @return The optimum produced by solve.QP from quadprog. The solution value is the set of weights.
 #' @export
 #' @seealso \code{\link[quadprog]{solve.QP}}
 #' @keywords asset allocation efficient frontier target return
 #'
-optimize.target.return<-function(target.ret,cma.ta){
+optimize.target.return<-function(target.ret,cma.ta,tol=0.00004){
     require(quadprog)
     nclasses.cmf<-cma.ta$base.nclasses
     nclasses<-cma.ta$nclasses
@@ -113,7 +116,6 @@ optimize.target.return<-function(target.ret,cma.ta){
 
     boxmat<-diag(nclasses.cmf)
     boxmat<-cbind(boxmat,boxmat,boxmat)
-    tol<-0.00004 #tolerance
     A<-matrix(ret,1,nclasses) #target return
     A<-rbind(A,matrix(1,1,nclasses)) # full investment with tol
     A<-rbind(A,matrix(-1,1,nclasses)) # full investment with tol
@@ -169,6 +171,7 @@ optimize.target.return<-function(target.ret,cma.ta){
 #' @param n.samples The number of samples for the resampling.
 #' @param thresh The minimum weight for an asset class (if the assumptions do
 #'   not specify another minimum)
+#' @param tol Tolerance to pass to Optimize Target Return
 #' @export
 #' @return A list with two items.  The first item w is the weights of the
 #'   efficient portfolio. The second item is mat which is the matrix of
@@ -176,16 +179,15 @@ optimize.target.return<-function(target.ret,cma.ta){
 #'   return and risk respectively.  The remainding columns are the weights.  The
 #'   w item is the column means of the weights.
 #'
-resample.target.risk<-function(target.risk,cma.ta,n.samples=100,thresh=0){
+resample.target.risk<-function(target.risk,cma.ta,n.samples=100,thresh=0,tol=0.00004){
     # Create the weights of a mean variant efficient portfolio with a target risk of target.risk
     # thresh is the minimum weight for a base asset class. If boxmin is non-zero for an asset class, then
     # the threshold is ignored (e.g if thresh is 0.025 but boxmin is 0.01, then the thresh is ignored
     require(MASS)
     require(xts)
     require(Matrix)
-    tol<-0.00004
+    tol_resamp<-0.00004
     # fun return the risk of a portfolio with with weights of x minus the target risk
-    #fun <-function(x,cma.ta) portrisk(optimize.target.return(x,cma.ta)$solution,cma.ta)-target.risk
     fun <-function(x,cmf.x) portrisk(optimize.target.return(x,cmf.x)$solution,cmf.x)-target.risk
     resamp.mat<-matrix(0,nrow=n.samples,ncol=cma.ta$nclasses+2)
     colnames(resamp.mat)<-c("Return","Risk",cma.ta$classes)
@@ -193,36 +195,37 @@ resample.target.risk<-function(target.risk,cma.ta,n.samples=100,thresh=0){
     stop.crit <-FALSE
     iteration<-1
     cmf.resamp<-cma.ta
-    iter.uniroot<-1
-    iter.opttarget<-1
+    iter.uniroot<-0
+    iter.opttarget<-0
     while (! stop.crit){
-        for (i in 1:n.samples){
-            result_type<-"try-error"
-            while (result_type=="try-error"){
+        i<-0
+        while (i < n.samples){
                 R<-xts(mvrnorm(n=120,cma.ta$ret,cma.ta$cov,
                                empirical=FALSE),order.by=seq(as.Date("2000/12/31"),by="month",length.out=120))
                 cmf.resamp$ret<-colMeans(R)
                 cmf.resamp$cov<-nearPD(cov(R))$mat
                 minmax<-find.minmax.return(cmf.resamp)
                 targetret<-try(uniroot(fun,c(minmax$min$opt+.0005,minmax$max$opt),cmf.x=cmf.resamp)$root,silent = TRUE)
-                result_type<-class(targetret)
-                if (result_type=="try-error"){
-                    #print(paste("uniroot error",iter.uniroot))
+                result_type_uniroot<-class(targetret)
+                if (result_type_uniroot=="try-error"){
                     iter.uniroot<-iter.uniroot+1
-                } else {iter.uniroot<-1}
-                if (result_type!="try-error"){
-                    sol<-try(optimize.target.return(targetret,cmf.resamp)$solution,silent = TRUE)
-                    result_type<-class(sol)
-                    if (result_type=="try-error"){
-                        #print(paste("opttarget error",iter.opttarget))
+                    if (iter.uniroot>100) stop("Resampling Error: Over 100 Uniroot errors generated")
+                } else{
+                    sol<-try(optimize.target.return(targetret,cmf.resamp,tol)$solution,silent = TRUE)
+                    result_type_otr<-class(sol)
+                    if (result_type_otr=="try-error"){
                         iter.opttarget<-iter.opttarget+1
+                        if (iter.opttarget>100) stop("Resampling Error: Over 100 Optimize Target Return errors generated")
+                    } else {
+                        i <- i+1
+                        resamp.mat[i,1]<-portret(sol,cmf.resamp)
+                        resamp.mat[i,2]<-portrisk(sol,cmf.resamp)
+                        resamp.mat[i,3:(cmf.resamp$nclasses+2)]<-sol
+                        iter.uniroot<-0
+                        iter.opttarget<-0
                     }
                 }
             }
-            resamp.mat[i,1]<-portret(sol,cmf.resamp)
-            resamp.mat[i,2]<-portrisk(sol,cmf.resamp)
-            resamp.mat[i,3:(cmf.resamp$nclasses+2)]<-sol
-        }
         w<-colMeans(resamp.mat[,3:ncol(resamp.mat)]) #resampling wt is mean weight of each class across the samples
         w.ac<-rowSums(matrix(w,ncol=3)) # wts of base asset classes across account type
         idx <- cmf.resamp$boxMin==0 & w.ac<thresh & w.ac>tol
@@ -234,7 +237,7 @@ resample.target.risk<-function(target.risk,cma.ta,n.samples=100,thresh=0){
             # force asset class with least weight and boxmin==0 to 0 and rerun
             temp<-w.ac
             temp[cmf.resamp$boxMin>0]<-Inf
-            temp[w.ac<=tol]<-Inf
+            temp[w.ac<=tol_resamp]<-Inf
             ac.tozero<-which.min(temp)
             cmf.resamp$boxMax[ac.tozero]<-0
             #print(paste("boxmax",sum(cmf.resamp$boxMax>0)))
@@ -245,6 +248,7 @@ resample.target.risk<-function(target.risk,cma.ta,n.samples=100,thresh=0){
     out$mat<-resamp.mat
     return(out)
 }
+
 
 #' Combine asset class weights from different account types.
 #' 

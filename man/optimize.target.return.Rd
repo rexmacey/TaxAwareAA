@@ -5,12 +5,14 @@
 \title{Find the portfolio with the minimum standard deviation given a target return
 and a set of capital market assumptions}
 \usage{
-optimize.target.return(target.ret, cma.ta)
+optimize.target.return(target.ret, cma.ta, tol = 4e-05)
 }
 \arguments{
 \item{target.ret}{The target return.  Should be a feasible return.}
 
 \item{cma.ta}{Tax-aware capital market assumptions}
+
+\item{tol}{Tolerance for constraints.}
 }
 \value{
 The optimum produced by solve.QP from quadprog. The solution value is the set of weights.

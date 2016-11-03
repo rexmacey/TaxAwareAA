@@ -264,13 +264,16 @@ cma.ta.create<-function(cma,investor){
     out$nclasses<-length(class.names)
     at.returns<-ATReturn.calc(cma,investor)
     out$ret<-c(at.returns$at.return.taxable,at.returns$at.return.deferred,at.returns$at.return.exempt)
+    out$ret.geom<-c(at.returns$at.return.taxable.geom,at.returns$at.return.deferred.geom,at.returns$at.return.exempt.geom)
     names(out$ret)<-class.names
-    cov3<-cbind(cma$cov,cma$cov,cma$cov) # new cov matrix
-    cov3<-rbind(cov3,cov3,cov3)
-    rownames(cov3)<-class.names
-    colnames(cov3)<-class.names
-    cov3<-nearPD(cov3) #nearest positive definite matrix
-    out$cov<-cov3$mat
+    risk.ta<-c(cma$ac.data$risk*(1-investor["LTCG"]),cma$ac.data$risk,cma$ac.data$risk) # tax adj risk (std dev)
+    corr.ta<-cbind(cma$corr,cma$corr,cma$corr)
+    corr.ta<-rbind(corr.ta,corr.ta,corr.ta)
+    cov.ta<-risk.ta %*% t(risk.ta) * corr.ta # adjusted for taxes
+    rownames(cov.ta)<-class.names
+    colnames(cov.ta)<-class.names
+    cov.ta<-nearPD(cov.ta) #nearest positive definite matrix
+    out$cov<-cov.ta$mat
     out$boxMin<-cma$ac.data$Min
     names(out$boxMin)<-cma$classes
     out$boxMax<-cma$ac.data$Max
@@ -299,12 +302,12 @@ print.cma.ta<-function(cma.ta, kable=TRUE, ...){
     nclasses.base<-cma.ta$base.nclasses
     cat("As of",cma.ta$as_of_date,"\n" )
     cat("Number of asset classes (per account type)",nclasses.base,"\n")
-    temp<-data.frame(matrix(cma.ta$ret*100,ncol=3))
+    temp<-data.frame(matrix(cma.ta$ret.geom*100,ncol=3))
     temp<-cbind(temp,100*diag(matrix(cma.ta$cov,nrow = cma.ta$nclasses))[1:nclasses.base]^.5)
     temp<-cbind(temp,cma.ta$boxMin*100,cma.ta$boxMax*100)
     rownames(temp)<-cma.ta$base.classes
     colnames(temp)<-c("Taxable Ret%","Deferred Ret%","Exempt Ret%","Risk%","MinWt","MaxWt")
-    temp<-round(temp,1)
+    temp<-round(temp,2)
     if (kable){
         require(knitr)
         return(knitr::kable(temp,caption="Capital Market Assumptions"))
@@ -323,12 +326,12 @@ print.cma.ta<-function(cma.ta, kable=TRUE, ...){
 print.cma<-function(cma){
     cat("As of",cma$as_of_date,"\n" )
     cat("Number of asset classes",cma$nclasses,"\n")
-    temp<-round(100*cma$ac.data[,c("ret","risk")],1)
+    temp<-round(100*cma$ac.data[,c("geom.ret","risk")],1)
     colnames(temp)<-c("Return%","Risk%")
     print(temp)
-    plot(cma$ac.data[,"risk"]*100,cma$ac.data[,"ret"]*100,
+    plot(cma$ac.data[,"risk"]*100,cma$ac.data[,"geom.ret"]*100,
          main="Asset Class Assumptions", xlab="Std Dev %", ylab="Return %",col="blue",pch=16)
-    loc<-100*cma$ac.data[,c("risk","ret")]
+    loc<-100*cma$ac.data[,c("risk","geom.ret")]
     loc[,2]<-loc[,2]-0.25 #move down a bit
     text(loc,cma$classes)
     invisible(NULL)
