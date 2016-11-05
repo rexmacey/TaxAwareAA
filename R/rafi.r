@@ -79,7 +79,7 @@ rafi.load<-function(rafi.data.loc,acnametable="acname_table.csv"){
     rafi$ret[rafi$ret=="-"]<-0 # converts hyphens to zeros
     idx<-is.na(rafi$ret[,"Expected.Return.."])
     rafi$ret<-rafi$ret[!idx,] #remove extraneous rows
-    rafi$ret$Asset.class<-sapply(rafi$ret$Asset.class,acname_lookup,type="ret",ac_names=ac_names)
+    rafi$ret$Asset.class<-unlist(sapply(rafi$ret$Asset.class,acname_lookup,type="ret",ac_names=ac_names))
     row.names(rafi$ret)<-rafi$ret$Asset.class
     rafi$as_of_date<-rafi$ret$As.of.Date[1]
     rafi$nclasses<-nrow(rafi$ret)
@@ -121,6 +121,7 @@ rafi.read.csv<-function(rafi.data.loc){
 #' @param ac is the RAFI name of the asset class
 #' @param type is ret if the name comes from the return CSV else we assume it comes from the corr CSV
 #' @param ac_names is the table.  This is loaded in \code{\link{rafi.load}}
+#' @export
 #' @return A character string with the name of the asset class
 #' 
 acname_lookup<-function(ac,type,ac_names){
@@ -134,16 +135,16 @@ acname_lookup<-function(ac,type,ac_names){
 }
 
 #' Calculates the pre-tax return
-#' 
+#'
 #' Simulates the investment value without taxes
 #'
-#' @param yld is initial yield in decimal (e.g. 0.03 for 3%)
+#' @param yld is initial yield in decimal (e.g. 0.03 for 3 percent)
 #' @param growth is the annual growth rate of the income in decimal.
 #' @param valchange is the annual percentage change in the valuation in decimal
 #' @param horizon number of years to simulate
-#' @return Pretax annaul return in decimal
+#' @return Pretax annual return in decimal
 #' 
-pretax_return<-function(yld, growth, valchange,horizon=10){
+pretax_return<-function(yld, growth, valchange, horizon=10){
     price<-100
     div0<-yld*price
     div<-div0
@@ -159,4 +160,51 @@ pretax_return<-function(yld, growth, valchange,horizon=10){
         shares<-shares+income/price
     }
     return((shares*price/100)^(1/horizon)-1)
+}
+
+#' Check RAFI data
+#'
+#' This function checks the 2 CSV files from RAFI.
+#' It checks that the names of the assets classes are defined in the acnametable
+#'
+#' @param rafi.data.loc folder in which the CSV files are located
+#' @param acnametable Name of csv file containing asset class details
+#' @keywords asset allocation efficient frontier
+#' @export
+#' @return A list with errors or and empty list is no errors
+#' 
+rafi.data.check<-function(rafi.data.loc,acnametable){
+    ac_names<-read.csv(file=paste0(rafi.data.loc,acnametable),stringsAsFactors = FALSE)
+    rafi<-rafi.read.csv(rafi.data.loc)
+    
+    n_acnames<-nrow(ac_names)
+    n_acret<-nrow(rafi$ret)
+    n_accorr<-nrow(rafi$corr)
+    
+    
+    err_list<-list()
+    n_err<-0
+    
+    if(n_acnames!=n_acret){
+        n_err<-n_err+1
+        err_list[[n_err]]<-"# Assets in return file not equal to # in acname_table"
+    }
+    if(n_acnames!=n_accorr){
+        n_err<-n_err+1
+        err_list[[n_err]]<-"# Assets in correlation file not equal to # in acname_table"
+    }
+    
+    for(i in 1:n_acret){
+        if(length(which(ac_names[,1]==rafi$ret$Asset.class[i]))==0){
+            n_err<-n_err+1
+            err_list[[n_err]]<-paste("Unrecognized asset class in RAFI return file",rafi$ret$Asset.class[i])
+        }
+    }
+    for(i in 1:n_accorr){
+        if(length(which(ac_names[,1]==rafi$corr$Index[i]))==0){
+            n_err<-n_err+1
+            err_list[[n_err]]<-paste("Unrecognized asset class in RAFI corr file",rafi$corr$Index[i])
+        }
+    }
+    return(err_list)
 }
