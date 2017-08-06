@@ -7,6 +7,8 @@
 #' 
 #' @param rafi.data.loc Folder in which the CSV files are located
 #' @param acnametable Name of csv file containing asset class details
+#' @param file.ret CSV file name with return assumptions
+#' @param file.corr CSV file name with correlation assumptions
 #' @param inflation rate Default calls the function 
 #'   \code{\link{Get10YrBEInflationRate}}
 #' @keywords asset allocation efficient frontier
@@ -17,12 +19,13 @@
 #'   and tax information.  This table also includes box and custom constraints
 #'   There is also corr the correlation matrix, and/or cov for the covariance
 #'   matrix and nconstraints for the number of constraints.
-rafi.cma<-function(rafi.data.loc,acnametable="acname_table.csv",
-                   inflation.rate=Get10YrBEInflationRate()$rate){
+rafi.cma.v1<-function(rafi.data.loc,acnametable="acname_table.csv",file.ret="core_asset_class_expected_returns.csv",
+                      file.corr="core_asset_class_correlations_forecasted.csv",
+                      inflation.rate=Get10YrBEInflationRate()$rate){
     ac_names<-read.csv(file=paste0(rafi.data.loc,acnametable),stringsAsFactors = FALSE)
     first.constraint.col<-match("Max",colnames(ac_names))+1 # Constraints begin after Max Col
     row.names(ac_names)<-ac_names$rt_class_names
-    rafi.data<-rafi.load(rafi.data.loc,acnametable)
+    rafi.data<-rafi.load.v1(rafi.data.loc,acnametable,file.ret,file.corr)
     ac_names<-ac_names[rafi.data$ret$Asset.class,] #re order to match ret which should match corr
     geom.ret<-rafi.data$ret$Expected.Return../100 +inflation.rate - ac_names$Expense
     arith.ret<-geom.ret + (rafi.data$ret$Volatility../100)^2/2
@@ -63,18 +66,21 @@ rafi.cma<-function(rafi.data.loc,acnametable="acname_table.csv",
 #'
 #' @param rafi.data.loc folder in which the CSV files are located
 #' @param acnametable Name of csv file containing asset class details
+#' @param file.ret CSV file name with return assumptions
+#' @param file.corr CSV file name with correlation assumptions
 #' @keywords asset allocation efficient frontier
 #' @return A list with four items: ret is the return data, corr is the correlation matrix and
 #' as_of_date is the date of the assumptionsfrom the csv file, nclasses is the number of classes
 #'   correlation data
 #'   
-rafi.load<-function(rafi.data.loc,acnametable="acname_table.csv"){
+rafi.load.v1<-function(rafi.data.loc,acnametable="acname_table.csv",file.ret="core_asset_class_expected_returns.csv",
+                       file.corr="core_asset_class_correlations_forecasted.csv"){
     # The order and text of the asset class names of the returns and correlations may not match.  We want the classes to be
     # in the same order and have corresponding names.
     # A csv file is used to lookup new names for the asset classes. It also contains other information
     ac_names<-read.csv(file=paste0(rafi.data.loc,acnametable),stringsAsFactors = FALSE)
     #first.constraint.col<-match("Max",colnames(ac_names))+1 # Constraints begin after Max Col
-    rafi<-rafi.read.csv(rafi.data.loc)
+    rafi<-rafi.read.csv.v1(rafi.data.loc,file.ret,file.corr)
     rafi$ret[rafi$ret=="-"]<-0 # converts hyphens to zeros
     idx<-is.na(rafi$ret[,"Expected.Return.."])
     rafi$ret<-rafi$ret[!idx,] #remove extraneous rows
@@ -99,14 +105,17 @@ rafi.load<-function(rafi.data.loc,acnametable="acname_table.csv"){
 #' allows one to see the data in an unprocessed form.
 #' 
 #' @param rafi.data.loc folder in which the CSV files are located
+#' @param file.ret CSV file name with return assumptions
+#' @param file.corr CSV file name with correlation assumptions
 #' @keywords asset allocation efficient frontier
 #' @return value A list with two items: ret is the return data, corr is the 
 #'   correlation data
 #'   
-rafi.read.csv<-function(rafi.data.loc){
+rafi.read.csv.v1<-function(rafi.data.loc,file.ret="core_asset_class_expected_returns.csv",
+                           file.corr="core_asset_class_correlations_forecasted.csv"){
     out<-list()
-    out$ret<-read.csv(paste0(rafi.data.loc,"core_asset_class_expected_returns.csv"),stringsAsFactors = FALSE)
-    out$corr<-read.csv(paste0(rafi.data.loc,"core_asset_class_correlations_forecasted.csv"),stringsAsFactors = FALSE)
+    out$ret<-read.csv(paste0(rafi.data.loc,file.ret),stringsAsFactors = FALSE)
+    out$corr<-read.csv(paste0(rafi.data.loc,file.corr),stringsAsFactors = FALSE)
     return(out)
 }
 
@@ -172,7 +181,7 @@ pretax_return<-function(yld, growth, valchange, horizon=10){
 #' 
 rafi.data.check<-function(rafi.data.loc,acnametable){
     ac_names<-read.csv(file=paste0(rafi.data.loc,acnametable),stringsAsFactors = FALSE)
-    rafi<-rafi.read.csv(rafi.data.loc)
+    rafi<-rafi.read.csv.v1(rafi.data.loc)
     
     n_acnames<-nrow(ac_names)
     n_acret<-nrow(rafi$ret)
