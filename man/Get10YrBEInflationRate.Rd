@@ -20,4 +20,3 @@ Uses the Quandl package to retrieve the data.
 \keyword{asset}
 \keyword{efficient}
 \keyword{frontier.}
-

@@ -58,4 +58,3 @@ final income. This income along with the valuation change determines the
 final value of the asset.  This value is adjusted for a final sale assuming
 any gain (loss) is long-term.
 }
-

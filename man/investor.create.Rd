@@ -48,4 +48,3 @@ This function creates an investor object.
 \keyword{asset}
 \keyword{efficient}
 \keyword{frontier}
-

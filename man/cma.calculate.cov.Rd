@@ -22,4 +22,3 @@ risk vector
 \keyword{asset}
 \keyword{efficient}
 \keyword{frontier.}
-

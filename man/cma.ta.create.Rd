@@ -17,4 +17,3 @@ A cma.ta object.
 \description{
 Create a tax-aware CMA
 }
-

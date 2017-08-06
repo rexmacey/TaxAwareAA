@@ -17,9 +17,8 @@ This function finds the minimum and maximum feasible returns given a set of
 @param cma.ta Tax-aware capital market assumptions
  @keywords tax-aware efficient frontier
  @return  value A two item list containing min and max each of which are produced by
-   solveLP. The opt value is the min or max return respectively
+   solveLP. The opt value is the min or max return respectively. Arithmetic.
  @export
  @seealso \code{\link[linprog]{solveLP}}
  @keywords find.minmax.return()
 }
-

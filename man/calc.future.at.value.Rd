@@ -19,4 +19,3 @@ After-tax value
 \description{
 The returns in the cma are assumed to be arithmetic.  This adjusts them to geometric before compounding.
 }
-

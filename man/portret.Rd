@@ -18,4 +18,3 @@ value representing the variance of the portfolio
 \description{
 This is the expected return given the capital market assumptions
 }
-

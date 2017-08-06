@@ -22,4 +22,3 @@ class assuming it were held in each of the three account types: taxable,
 deferred and exempt. Arithmetic returns are more appropriate inputs into a
 mean variance optimizer than geometric.
 }
-

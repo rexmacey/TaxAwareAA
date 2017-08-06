@@ -5,7 +5,7 @@
 \title{Use resampling to find an efficient portfolio}
 \usage{
 resample.target.risk(target.risk, cma.ta, n.samples = 100, thresh = 0,
-  tol = 4e-05)
+  tol = 0.00004)
 }
 \arguments{
 \item{target.risk}{The target risk for which to find an efficient portfolio.}
@@ -41,4 +41,3 @@ minimum weights less than the threshold (for example, if one sets a 1%
 minimum weight to cash and a threshold of 2.5%, then a 1% cash weighting will
 be allowed.)
 }
-

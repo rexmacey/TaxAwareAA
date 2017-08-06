@@ -15,7 +15,7 @@ inefficient.}
 }
 \value{
 An eff object which is a matrix. Each row is a point on the frontier.
-  The first column is the return. The second column is the standard
+  The first column is the geometric return. The second column is the standard
   deviation. Subsequent columns are asset class weights.
 }
 \description{
@@ -26,4 +26,3 @@ capital market assumptions.
 \keyword{asset}
 \keyword{efficient}
 \keyword{frontier}
-

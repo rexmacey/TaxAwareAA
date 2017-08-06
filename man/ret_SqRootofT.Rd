@@ -26,4 +26,3 @@ This calculation follows that described on page 16 of RAFI AA-Asset_Class-Risk.p
 \examples{
 ret_SqRootofT(0.025,1.3,14.3,10)
 }
-

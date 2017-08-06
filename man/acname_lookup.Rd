@@ -21,4 +21,3 @@ RAFI does not provide consistent names for their asset classes. That is the name
 return CSV file do not match the names in the correlation CSV.  Plus we may not prefer their names.
 This function is called to look up a RAFI name and return a preferred name.
 }
-

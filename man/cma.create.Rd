@@ -57,4 +57,3 @@ This function creates a cma object.
 \keyword{asset}
 \keyword{efficient}
 \keyword{frontier.}
-

@@ -2,10 +2,10 @@
 % Please edit documentation in R/efficient.frontier.r
 \name{optimize.target.return}
 \alias{optimize.target.return}
-\title{Find the portfolio with the minimum standard deviation given a target return
+\title{Find the portfolio with the minimum standard deviation given a target arithmetic return
 and a set of capital market assumptions}
 \usage{
-optimize.target.return(target.ret, cma.ta, tol = 4e-05)
+optimize.target.return(target.ret, cma.ta, tol = 0.00004)
 }
 \arguments{
 \item{target.ret}{The target return.  Should be a feasible return.}
@@ -30,4 +30,3 @@ set of target returns. Requires quadprog
 \keyword{frontier}
 \keyword{return}
 \keyword{target}
-

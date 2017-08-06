@@ -22,4 +22,3 @@ allows one to see the data in an unprocessed form.
 \keyword{asset}
 \keyword{efficient}
 \keyword{frontier}
-

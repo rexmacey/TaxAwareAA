@@ -64,7 +64,6 @@ rafi.cma<-function(rafi.data.loc,acnametable="acname_table.csv",
 #' @param rafi.data.loc folder in which the CSV files are located
 #' @param acnametable Name of csv file containing asset class details
 #' @keywords asset allocation efficient frontier
-#' @export
 #' @return A list with four items: ret is the return data, corr is the correlation matrix and
 #' as_of_date is the date of the assumptionsfrom the csv file, nclasses is the number of classes
 #'   correlation data
@@ -101,7 +100,6 @@ rafi.load<-function(rafi.data.loc,acnametable="acname_table.csv"){
 #' 
 #' @param rafi.data.loc folder in which the CSV files are located
 #' @keywords asset allocation efficient frontier
-#' @export
 #' @return value A list with two items: ret is the return data, corr is the 
 #'   correlation data
 #'   
@@ -121,7 +119,6 @@ rafi.read.csv<-function(rafi.data.loc){
 #' @param ac is the RAFI name of the asset class
 #' @param type is ret if the name comes from the return CSV else we assume it comes from the corr CSV
 #' @param ac_names is the table.  This is loaded in \code{\link{rafi.load}}
-#' @export
 #' @return A character string with the name of the asset class
 #' 
 acname_lookup<-function(ac,type,ac_names){

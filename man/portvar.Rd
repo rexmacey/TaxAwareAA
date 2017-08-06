@@ -18,4 +18,3 @@ value representing the variance of the portfolio
 \description{
 This function is called by the portrisk function
 }
-

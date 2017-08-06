@@ -129,10 +129,11 @@ ATReturn.taxable<-function(yld,growth,valChg,intOrd,intTE,divQual,divOrd,turnove
 #' a before-tax starting value.  Since the final dollars are correct the
 #' allocation is correct which is our goal.
 #'
-#' @param arith.ret Pre-tax geometric return.  The geometric return is used because
-#'   this is the rate at which the asset will grow over time.
+#' @param yld Yield on the investment
+#' @param growth Growth rate of the income paid on the investment
+#' @param valChg Change in valuation of the investment
+#' @param foreigntaxwithheld is the percent of income withheld for foreign taxes
 #' @param taxROrdInc Tax rate on ordinary income
-#' @param taxRState State income tax rate
 #' @param horizon Number of year in forecast horizon
 #' @param risk Standard deviation of asset class.
 #' @export

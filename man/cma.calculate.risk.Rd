@@ -19,4 +19,3 @@ Calculates the risk vector of a cma from its covariance matrix
 \keyword{asset}
 \keyword{efficient}
 \keyword{frontier.}
-

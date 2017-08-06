@@ -25,4 +25,3 @@ this function may not work as expected in the future.
 \keyword{asset}
 \keyword{efficient}
 \keyword{frontier}
-

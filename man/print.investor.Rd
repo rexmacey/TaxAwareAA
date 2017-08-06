@@ -4,7 +4,7 @@
 \alias{print.investor}
 \title{Print investor}
 \usage{
-\method{print}{investor}(x, ...)
+print.investor(x, ...)
 }
 \arguments{
 \item{x}{Investor}
@@ -17,4 +17,3 @@ Prints
 \description{
 Print investor
 }
-

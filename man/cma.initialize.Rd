@@ -20,4 +20,3 @@ called to populate it.
 \keyword{asset}
 \keyword{efficient}
 \keyword{frontier.}
-

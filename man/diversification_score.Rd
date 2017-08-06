@@ -16,4 +16,3 @@ Diversification score.  This score is scaled such that if one equally invested i
 This score is scaled such that if one equally invested in n assets, the score will be n.  Thus higher values indicate greater diversification.
 This does not incorporate any correlation among asset classes. It treats each asset class independently.
 }
-

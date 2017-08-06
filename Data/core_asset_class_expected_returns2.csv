@@ -1,0 +1,22 @@
+As of Date,Asset class,Expected Return %,Yield %,Growth %,Roll Return Net Credit Loss %,Valuation Change Return %,FX Return %,Volatility %,Credit Loss %,Collateral %,Rebalance %,Confidence Interval -67 %,Confidence Interval -95 %,Confidence Interval 67 %,Confidence Interval 95 %
+Apr-16,US Large,1.169764,2.1701,1.262142,-,-2.262478,0,14.202215,-,-,-,-1.075803,-3.32137,3.415331,5.660898
+Apr-16,US Small,0.281177,1.593557,2.01139,-,-3.323769,0,18.838341,-,-,-,-2.697426,-5.676029,3.25978,6.238383
+Apr-16,REITs,2.496703,4.672295,-1.94331,-,-0.232282,0,20.859928,-,-,-,-0.801541,-4.099785,5.794947,9.093191
+Apr-16,ST US Treas,0.113995,-0.057092,-,0.275808,-0.104721,0,2.149346,0,-,-,-0.225846,-0.565687,0.453836,0.793677
+Apr-16,LT US Treas,-0.488503,1.145938,-,0.281019,-1.91546,0,11.343564,0,-,-,-2.282078,-4.075653,1.305072,3.098647
+Apr-16,High Yield,2.762105,4.045206,-,1.799711,-0.336077,0,9.56919,-2.746734,-,-,1.249083,-0.263939,4.275127,5.788149
+Apr-16,US Core,0.537155,0.720264,-,0.668145,-0.570504,0,3.802219,-0.28075,-,-,-0.064029,-0.665213,1.138339,1.739523
+Apr-16,EM (Non-Local) Debt,3.008003,3.110687,-,1.318385,-0.650824,0,9.017856,-0.770244,-,-,1.582155,0.156307,4.433851,5.859699
+Apr-16,EM Currency,4.256213,2.087234,-,-,-,2.16898,10.043331,0,-,-,2.668223,1.080233,5.844203,7.432193
+Apr-16,Bank Loans,2.231018,2.479104,-,0.764761,-0.016101,0,8.230888,-0.996745,-,-,0.9296,-0.371818,3.532436,4.833854
+Apr-16,US Cash Rate,-0.550111,-0.550111,-,-,-,0,1.5,-,-,-,-0.787282,-1.024453,-0.31294,-0.075769
+Apr-16,Commodities,1.85298,-,-,-4.36594,4.061812,0,16.295237,-,-0.550111,2.707219,-0.723523,-3.300026,4.429483,7.005986
+Apr-16,US Tips,0.882256,0.606258,-,0.741552,-0.465555,0,6.156074,0,-,-,-0.091105,-1.064466,1.855617,2.828978
+Apr-16,EAFE Equity,6.084495,3.524286,1.262142,-,0.326098,0.971969,16.621187,-,-,-,3.456455,0.828415,8.712535,11.340575
+Apr-16,EM Equity,7.902499,2.908316,1.507246,-,1.637489,1.849448,23.386073,-,-,-,4.204836,0.507173,11.600162,15.297825
+Apr-16,Global Core,0.611781,0.240041,-,0.48722,-0.547834,0.711024,5.820979,-0.27867,-,-,-0.308597,-1.228975,1.532159,2.452537
+Apr-16,EM (Local) Debt,4.510759,2.612544,-,0.365878,-0.411707,2.16898,17.157622,-0.224936,-,-,1.797901,-0.914957,7.223617,9.936475
+Apr-16,Munis,0.16,0.16,0,0,0,0,4.5,0,0,0,0,0,0,0
+,,,,,,,,,,,,,,,
+"As of 04/30/2016. Source: These expected returns are calculated by Research Affiliates LLC using data provided by MSCI Inc., Bloomberg, and Barclays.",,,,,,,,,,,,,,,
+"Volatility is measured as standard deviation. These forecasts are forward-looking statements based upon the reasonable beliefs of RA and are not a guarantee of future performance. This content is not investment or tax advice or an offer, sale or any solicitation of any offer to buy any security, derivative or any other financial instrument. Any use of the above content is subject to and conditioned upon the user's agreement with all important disclosures, disclaimers and provisions found at www.researchaffiliates.com/Pages/Legal.aspx. In the event the above content is provided or modified by a third-party, Research Affiliates LLC fully disclaims any responsibility or liability for such content. ©2016 Research Affiliates, LLC. All rights reserved. ",,,,,,,,,,,,,,,

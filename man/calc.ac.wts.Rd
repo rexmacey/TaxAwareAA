@@ -18,4 +18,3 @@ value Vector of asset class weights
 Tax-aware optimization produces weights for each asset class in each account type.  This function returns the weight of each asset class
 across all acount types (e.g. sum of cash in taxable, deferred and exempt accounts)
 }
-

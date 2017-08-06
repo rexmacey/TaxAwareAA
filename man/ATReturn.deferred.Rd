@@ -8,16 +8,19 @@ ATReturn.deferred(yld, growth, valChg, foreigntaxwithheld, taxROrdInc, risk,
   horizon = 10)
 }
 \arguments{
+\item{yld}{Yield on the investment}
+
+\item{growth}{Growth rate of the income paid on the investment}
+
+\item{valChg}{Change in valuation of the investment}
+
+\item{foreigntaxwithheld}{is the percent of income withheld for foreign taxes}
+
 \item{taxROrdInc}{Tax rate on ordinary income}
 
 \item{risk}{Standard deviation of asset class.}
 
 \item{horizon}{Number of year in forecast horizon}
-
-\item{arith.ret}{Pre-tax geometric return.  The geometric return is used because
-this is the rate at which the asset will grow over time.}
-
-\item{taxRState}{State income tax rate}
 }
 \value{
 The after-tax arithmetic return of an asset invested in taxable account.
@@ -36,4 +39,3 @@ understate the after-tax return by dividing an after-tax terminal value with
 a before-tax starting value.  Since the final dollars are correct the
 allocation is correct which is our goal.
 }
-

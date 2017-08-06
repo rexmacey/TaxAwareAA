@@ -74,4 +74,3 @@ Rex Macey, \email{rex@macey.us}
 \keyword{allocation}
 \keyword{asset}
 \keyword{portfolio}
-
