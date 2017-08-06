@@ -1,4 +1,40 @@
 #' Load RAFI data into a cma
+#'
+#' This function reads a set of returns and correlations
+#' downloaded from the RAFI website. Combined with assumptions about
+#' the investor, a cma object is returned representing capital
+#' market assumptions.  RAFI files are in CSV format
+#'  through April 2017.  From May 2017 they use a XLSX format.
+#' 
+#' @param version Version (either v1 or v2). Use v1 if RAFI files are in CSV format
+#'  through April 2017.  From May 2017 they use a XLSX format.
+#' @param rafi.data.loc Folder in which the RAFI input files are located
+#' @param acnametable Name of csv or xlsx file containing asset class details
+#' @param xls.file.name Name of XLSX RAFI files
+#' @param file.ret CSV file name with return assumptions
+#' @param file.corr CSV file name with correlation assumptions
+#' @param inflation.rate Default calls the function
+#'   \code{\link{Get10YrBEInflationRate}}
+#' @keywords asset allocation efficient frontier
+#' @return A cma object which is a list containing the as_of_date of the
+#'   assumptions, the nclasses (number of classes), ac.data which is a table in
+#'   which each row represents and asset class and columns contain return, risk
+#'   and tax information.  This table also includes box and custom constraints
+#'   There is also corr the correlation matrix, and/or cov for the covariance
+#'   matrix and nconstraints for the number of constraints.
+#'   
+rafi.cma <- function(version="v2",rafi.data.loc,acnametable="acname_table.xlsx",
+                     xls.file.name="Asset-Allocation-Interactive-Data.xlsx",
+                     file.ret="core_asset_class_expected_returns.csv",
+                     file.corr="core_asset_class_correlations_forecasted.csv",
+                     inflation.rate=Get10YrBEInflationRate()$rate){
+    return(switch(toupper(version),
+           V1 = rafi.cma.v1(rafi.data.loc,acnametable,file.ret,file.corr,inflation.rate),
+           V2 = rafi.cma.v2(rafi.data.loc,acnametable,xls.file.name),
+           stop("Invalid version in call to rafi.cma function. Should be v1 or v2")))
+}
+
+#' Load RAFI data into a cma
 #' 
 #' This function reads a set of returns and correlations from CSV files 
 #' downloaded from the RAFI website.  Since RAFI may change its file formats, 
@@ -12,7 +48,6 @@
 #' @param inflation rate Default calls the function 
 #'   \code{\link{Get10YrBEInflationRate}}
 #' @keywords asset allocation efficient frontier
-#' @export
 #' @return A cma object which is a list containing the as_of_date of the
 #'   assumptions, the nclasses (number of classes), ac.data which is a table in
 #'   which each row represents and asset class and columns contain return, risk
@@ -213,4 +248,120 @@ rafi.data.check<-function(rafi.data.loc,acnametable){
         }
     }
     return(err_list)
+}
+
+#' Load RAFI data into a cma
+#' Version 2 uses RAFI file format which was adopted around May 2017
+#' This new format includes a nominal return from which the inflation rate 
+#' may be inferred.
+#' 
+#' This function reads a set of returns and correlations from XLSX files 
+#' downloaded from the RAFI website.  Since RAFI may change its file formats, 
+#' this function may not work as expected in the future.  
+#' 
+#' @param rafi.data.loc Folder in which the CSV files are located
+#' @param acnametable Name of XLSX file containing asset class details
+#' @param xls.file.name name of XLSX file with RAFI assumptions
+#' @keywords asset allocation efficient frontier
+#' @export
+#' @return A cma object which is a list containing the as_of_date of the
+#'   assumptions, the nclasses (number of classes), ac.data which is a table in
+#'   which each row represents and asset class and columns contain return, risk
+#'   and tax information.  This table also includes box and custom constraints
+#'   There is also corr the correlation matrix, and/or cov for the covariance
+#'   matrix and nconstraints for the number of constraints.
+rafi.cma.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",xls.file.name="Asset-Allocation-Interactive-Data.xlsx"){
+    rafi.data<-rafi.load.v2(rafi.data.loc,acnametable,xls.file.name)
+    inflation.rate<-rafi.data$ret[1,"Expected Return (Nominal)"]-rafi.data$ret[1,"Expected Return (Real)"]
+    ac_names<-ac_names<-data.frame(read_xlsx(paste0(rafi.data.loc,acnametable),sheet="acname_table"))
+    row.names(ac_names)<-ac_names$rt_class_names
+    first.constraint.col<-match("Max",colnames(ac_names))+1 # Constraints begin after Max Col
+    ac_names<-ac_names[row.names(rafi.data$ret),] #re order to match ret which should match corr
+    geom.ret<-rafi.data$ret$`Expected Return (Nominal)` - ac_names$Expense
+    arith.ret<-geom.ret + rafi.data$ret$Volatility^2/2
+    yield<-rafi.data$ret$`Average Net Yield`
+    idx<-yield<=0
+    yield[idx]<-yield[idx]+inflation.rate
+    growth<-rafi.data$ret$`Capital Growth`
+    growth[!idx]<-growth[!idx]+inflation.rate
+    val.change<-geom.ret-yield-growth
+    ac.data<-data.frame(ret=arith.ret,geom.ret=geom.ret,yld=yield,growth=growth,
+                        valChg=val.change,risk=rafi.data$ret$Volatility)
+    ac.data<-cbind(ac.data,ac_names[row.names(rafi.data$ret),c("IntOrd","IntTE","DivQual","DivOrd","Turnover","LTCG","STCG","ForeignTaxWithheld","Expense","Min","Max")])
+    nconstraints<-ncol(ac_names)-first.constraint.col+1
+    if (nconstraints>0) {
+        ac.data<-cbind(ac.data,ac_names[row.names(rafi.data$ret),first.constraint.col:ncol(ac_names)])
+    }
+    
+    idx <- ac_names$Max !=0
+    out<-list()
+    out$as_of_date<-rafi.data$as_of_date
+    out$classes<-row.names(ac_names[idx,])
+    out$nclasses<-sum(idx)
+    out$ac.data<-ac.data[idx,]
+    out$corr<-as.matrix(rafi.data$corr[idx,idx])
+    out$cov<- as.matrix(rafi.data$cov[idx,idx])
+    out$nconstraints<-nconstraints
+    class(out)<-"cma"
+    return(out)
+}
+
+#' Load RAFI data
+#'
+#' This function reads a set of returns and correlations from XLSX files
+#' downloaded from the RAFI website.  Since RAFI may change its file formats,
+#' this function may not work as expected in the future.
+#'
+#' @param rafi.data.loc folder in which the CSV files are located
+#' @param acnametable Name of xlsx file containing asset class details
+#' @param xls.file.name Name of Excel file downloaded from RAFI
+#' @keywords asset allocation efficient frontier
+#' @return A list with four items: ret is the return data, corr is the correlation matrix and
+#' as_of_date is the date of the assumptionsfrom the csv file, nclasses is the number of classes
+#'   correlation data
+#'   
+rafi.load.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",xls.file.name="Asset-Allocation-Interactive-Data.xlsx"){
+    # The order and text of the asset class names of the returns and correlations may not match.  We want the classes to be
+    # in the same order and have corresponding names.
+    # A csv file is used to lookup new names for the asset classes. It also contains other information
+    ac_names<-read_xlsx(paste0(rafi.data.loc,acnametable),sheet="acname_table")
+    #first.constraint.col<-match("Max",colnames(ac_names))+1 # Constraints begin after Max Col
+    rafi<-rafi.read.xls.v2(rafi.data.loc,xls.file.name="Asset-Allocation-Interactive-Data.xlsx")
+    row.names(rafi$ret)<-unlist(sapply(rafi$ret$`Asset Class`,acname_lookup,type="ret",ac_names=ac_names))
+    rafi$nclasses<-nrow(rafi$ret)
+    rownames(rafi$corr)<-sapply(colnames(rafi$corr),acname_lookup,type="corr",ac_names=ac_names)
+    colnames(rafi$corr)<-rownames(rafi$corr)
+    rownames(rafi$cov)<-rownames(rafi$corr)
+    colnames(rafi$cov)<-rownames(rafi$corr)
+    rafi$ret<-rafi$ret[rownames(rafi$corr),] # put in same order as correlations
+    return(rafi)
+}
+
+#' Read RAFI XLS file
+#'  
+#' This function reads a set of returns and correlations from XLS file 
+#' downloaded from the RAFI website.  No processing is done. This function 
+#' allows one to see the data in an unprocessed form.
+#' 
+#' @param rafi.data.loc folder in which the files are located
+#' @param xls.file.name name of XLSX file
+#' @keywords asset allocation efficient frontier
+#' @return value A list with two items: ret is the return data, corr is the 
+#'   correlation data
+#'   
+rafi.read.xls.v2<-function(rafi.data.loc,xls.file.name="Asset-Allocation-Interactive-Data.xlsx"){
+    rng.return<-"B4:L31"
+    rng.corr<-"C4:AC31"
+    rng.cov<-"C35:AC62"
+    rng.date<-"C50"
+    out<-list()
+    out$as_of_date<-read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Returns",range=rng.date)
+    out$ret<-as.data.frame(read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Returns",range=rng.return))
+    rafi.corr<-read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Risk.Matrix",range=rng.corr)
+    row.names(rafi.corr)<-names(rafi.corr)
+    rafi.cov<-read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Risk.Matrix",range=rng.cov)
+    row.names(rafi.cov)<-names(rafi.cov)
+    out$corr<-rafi.corr
+    out$cov<-rafi.cov
+    return(out)
 }
