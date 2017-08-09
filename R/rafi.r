@@ -28,6 +28,7 @@ rafi.cma <- function(version="v2",rafi.data.loc,acnametable="acname_table.xlsx",
                      file.ret="core_asset_class_expected_returns.csv",
                      file.corr="core_asset_class_correlations_forecasted.csv",
                      inflation.rate=Get10YrBEInflationRate()$rate){
+    library(readxl)
     return(switch(toupper(version),
            V1 = rafi.cma.v1(rafi.data.loc,acnametable,file.ret,file.corr,inflation.rate),
            V2 = rafi.cma.v2(rafi.data.loc,acnametable,xls.file.name),
@@ -350,10 +351,18 @@ rafi.load.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",xls.file.na
 #'   correlation data
 #'   
 rafi.read.xls.v2<-function(rafi.data.loc,xls.file.name="Asset-Allocation-Interactive-Data.xlsx"){
-    rng.return<-"B4:L31"
-    rng.corr<-"C4:AC31"
-    rng.cov<-"C35:AC62"
-    rng.date<-"C50"
+    if (file.exists(paste0(rafi.data.loc,"xlranges.yaml"))){
+        xl<-yaml.load_file(paste0(rafi.data.loc,"xlranges.yaml"))
+        rng.return<-xl$rng.return 
+        rng.corr<-xl$rng.corr 
+        rng.cov<- xl$rng.cov 
+        rng.date<-xl$rng.date     
+    } else {
+        rng.return<-"B4:L32"
+        rng.corr<-"C4:AD32"
+        rng.cov<- "C35:AD63"
+        rng.date<-"C50"
+    }
     out<-list()
     out$as_of_date<-read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Returns",range=rng.date)
     out$ret<-as.data.frame(read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Returns",range=rng.return))

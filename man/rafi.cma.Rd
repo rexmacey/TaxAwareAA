@@ -4,15 +4,27 @@
 \alias{rafi.cma}
 \title{Load RAFI data into a cma}
 \usage{
-rafi.cma(rafi.data.loc, acnametable = "acname_table.csv",
+rafi.cma(version = "v2", rafi.data.loc, acnametable = "acname_table.xlsx",
+  xls.file.name = "Asset-Allocation-Interactive-Data.xlsx",
+  file.ret = "core_asset_class_expected_returns.csv",
+  file.corr = "core_asset_class_correlations_forecasted.csv",
   inflation.rate = Get10YrBEInflationRate()$rate)
 }
 \arguments{
-\item{rafi.data.loc}{Folder in which the CSV files are located}
+\item{version}{Version (either v1 or v2). Use v1 if RAFI files are in CSV format
+through April 2017.  From May 2017 they use a XLSX format.}
 
-\item{acnametable}{Name of csv file containing asset class details}
+\item{rafi.data.loc}{Folder in which the RAFI input files are located}
 
-\item{inflation}{rate Default calls the function 
+\item{acnametable}{Name of csv or xlsx file containing asset class details}
+
+\item{xls.file.name}{Name of XLSX RAFI files}
+
+\item{file.ret}{CSV file name with return assumptions}
+
+\item{file.corr}{CSV file name with correlation assumptions}
+
+\item{inflation.rate}{Default calls the function
 \code{\link{Get10YrBEInflationRate}}}
 }
 \value{
@@ -24,10 +36,11 @@ A cma object which is a list containing the as_of_date of the
   matrix and nconstraints for the number of constraints.
 }
 \description{
-This function reads a set of returns and correlations from CSV files 
-downloaded from the RAFI website.  Since RAFI may change its file formats, 
-this function may not work as expected in the future. This data takes the raw
-RAFI estimates wihch are real geometric.
+This function reads a set of returns and correlations
+downloaded from the RAFI website. Combined with assumptions about
+the investor, a cma object is returned representing capital
+market assumptions.  RAFI files are in CSV format
+ through April 2017.  From May 2017 they use a XLSX format.
 }
 \keyword{allocation}
 \keyword{asset}
