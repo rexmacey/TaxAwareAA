@@ -16,6 +16,7 @@
 #' @param inflation.rate Default calls the function
 #'   \code{\link{Get10YrBEInflationRate}}
 #' @keywords asset allocation efficient frontier
+#' @export
 #' @return A cma object which is a list containing the as_of_date of the
 #'   assumptions, the nclasses (number of classes), ac.data which is a table in
 #'   which each row represents and asset class and columns contain return, risk
@@ -144,6 +145,7 @@ rafi.load.v1<-function(rafi.data.loc,acnametable="acname_table.csv",file.ret="co
 #' @param file.ret CSV file name with return assumptions
 #' @param file.corr CSV file name with correlation assumptions
 #' @keywords asset allocation efficient frontier
+#' @export
 #' @return value A list with two items: ret is the return data, corr is the 
 #'   correlation data
 #'   
@@ -347,6 +349,7 @@ rafi.load.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",xls.file.na
 #' @param rafi.data.loc folder in which the files are located
 #' @param xls.file.name name of XLSX file
 #' @keywords asset allocation efficient frontier
+#' @export
 #' @return value A list with two items: ret is the return data, corr is the 
 #'   correlation data
 #'   
