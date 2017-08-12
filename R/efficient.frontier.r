@@ -51,7 +51,6 @@ efficient.frontier<-function(cma.ta,n.portfolios=25){
 #'  @keywords find.minmax.return()
 #'
 find.minmax.return<-function(cma.ta){ # return min and max expected returns that meet constraints
-    require(linprog)
     nclasses.cmf<-cma.ta$base.nclasses
     nclasses<-cma.ta$nclasses
 
@@ -103,7 +102,6 @@ find.minmax.return<-function(cma.ta){ # return min and max expected returns that
 #' @keywords asset allocation efficient frontier target return
 #'
 optimize.target.return<-function(target.ret,cma.ta,tol=0.00004){
-    require(quadprog)
     nclasses.cmf<-cma.ta$base.nclasses
     nclasses<-cma.ta$nclasses
     class.names <- cma.ta$classes

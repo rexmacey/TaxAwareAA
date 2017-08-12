@@ -69,4 +69,14 @@
 #' @importFrom quadprog solve.QP
 #' @importFrom linprog solveLP
 #' @importFrom Quandl Quandl
+#' @importFrom readxl read_xlsx
+#' @importFrom xts xts
+#' @importFrom utils read.csv
+#' @importFrom stats cov
+#' @importFrom stats qnorm
+#' @importFrom stats uniroot
+#' @importFrom graphics plot
+#' @importFrom graphics text
+#' @import yaml
+#' @import Mass mvrnorm
 NULL

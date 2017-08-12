@@ -102,59 +102,6 @@ cma.create<-function(as_of_date=NULL, classes=list(), ret=vector("numeric"), yie
     return(out)
 }
 
-
-#' Add an asset class to a CMA
-#'
-#' This function adds an asset class to a cma. Correlation/Covariance data added
-#' separately.
-#'
-#' @param cma Capital market assumption
-#' @param class.name Name of asset class
-#' @param ret Expected total return of asset class in decimal (e.g. 0.05 for
-#'   five percent)
-#' @param yield Yield of asset class
-#' @param growth Growth of asset class
-#' @param risk Standad deviation of asset class returns
-#' @param boxmin Minimum weight of asset class. Default 0
-#' @param boxmax Maximum weight of asset class. Default 1
-#' @param intOrd The percentage of the yield subject to tax at the ordinary
-#'   income tax rate. From 0 to 1.
-#' @param intTE The percentage of the yield exempt from tax.
-#' @param divQual The percentage of the yield subject to tax at the qualified
-#'   dividend tax rate
-#' @param divOrd The percentage of the yield subject to tax at the ordinary
-#'   dividend tax rate
-#' @param turnover The percentage of the asset class that is sold each year.
-#' @param LTCG The percentage of capital gains subject to the long-term capital
-#'   gains tax rate.
-#' @param STCG The percentage of capital gains subject to the short-term capital
-#'   gains tax rate.
-#' @keywords asset allocation efficient frontier.
-#' @export
-#' @return A cma with the asset class added.
-#'
-cma.add.class<-function(cma, class.name, ret,yield, growth,risk, boxmin=0, boxmax=1,intOrd,intTE,divQual,divOrd,
-                    turnover, LTCG,STCG){
-    i<-nrow(cma$acdata)+1
-    out<-cma
-    out[i,Name]<-class.name
-    out[i,Ret]<-ret
-    out[i,Yield]<-yield
-    out[i,Growth]<-growth
-    out[i,Risk]<-risk
-    out[i,Min]<-boxmin
-    out[i,Max]<-boxmax
-    out[i,IntOrd]<-intOrd
-    out[i,IntTE]<-intTE
-    out[i,DivQual]<-divQual
-    out[i,DivOrd]<-divOrd
-    out[i,Turnover]<-turnover
-    out[i,LTCG]<-LTCG
-    out[i,STCG]<-STCG
-    out$nclasses<-i
-    return(out)
-}
-
 #' Add constraint to a CMA
 #'
 #' This function adds a contraint to a cma
@@ -238,8 +185,7 @@ cma.calculate.risk<-function(cma){
 #' @return A list with a cma with date and rate items. The date is the date the statistic was calculated.
 #'
 Get10YrBEInflationRate<-function(dt=format(Sys.Date(),"%Y-%m-01")){
-    library(Quandl)
-     x<-Quandl("FRED/T10YIE",start_date = "2015-01-01",end_date = dt)
+     x<-Quandl::Quandl("FRED/T10YIE",start_date = "2015-01-01",end_date = dt)
     out<-list()
     out$date<-x[1,1]
     out$rate<-x[1,2]/100
@@ -253,7 +199,6 @@ Get10YrBEInflationRate<-function(dt=format(Sys.Date(),"%Y-%m-01")){
 #' @export
 #' @return A cma.ta object.
 cma.ta.create<-function(cma,investor){
-    library(Matrix)
     class.names <- c(paste0(cma$classes,"-taxed"),
                      paste0(cma$classes,"-defer"),
                      paste0(cma$classes,"-exempt"))
@@ -272,7 +217,7 @@ cma.ta.create<-function(cma,investor){
     cov.ta<-risk.ta %*% t(risk.ta) * corr.ta # adjusted for taxes
     rownames(cov.ta)<-class.names
     colnames(cov.ta)<-class.names
-    cov.ta<-nearPD(cov.ta) #nearest positive definite matrix
+    cov.ta<-Matrix::nearPD(cov.ta) #nearest positive definite matrix
     out$cov<-cov.ta$mat
     out$boxMin<-cma$ac.data$Min
     names(out$boxMin)<-cma$classes
@@ -286,6 +231,7 @@ cma.ta.create<-function(cma,investor){
     out$base.classes<-cma$classes
     out$base.nclasses<-cma$nclasses
     out$account.values<-c(investor["taxed"],investor["deferred"],investor["exempt"])   #investor$account.values
+    out$inflation<-cma$inflation
     class(out)<-"cma.ta"
     return(out)
 }
@@ -329,6 +275,7 @@ print.cma<-function(cma){
     temp<-round(100*cma$ac.data[,c("geom.ret","risk")],1)
     colnames(temp)<-c("Return%","Risk%")
     print(temp)
+    cat("Inflation",cma$inflation,"\n" )
     plot(cma$ac.data[,"risk"]*100,cma$ac.data[,"geom.ret"]*100,
          main="Asset Class Assumptions", xlab="Std Dev %", ylab="Return %",col="blue",pch=16)
     loc<-100*cma$ac.data[,c("risk","geom.ret")]

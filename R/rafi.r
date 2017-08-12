@@ -29,7 +29,6 @@ rafi.cma <- function(version="v2",rafi.data.loc,acnametable="acname_table.xlsx",
                      file.ret="core_asset_class_expected_returns.csv",
                      file.corr="core_asset_class_correlations_forecasted.csv",
                      inflation.rate=Get10YrBEInflationRate()$rate){
-    library(readxl)
     return(switch(toupper(version),
            V1 = rafi.cma.v1(rafi.data.loc,acnametable,file.ret,file.corr,inflation.rate),
            V2 = rafi.cma.v2(rafi.data.loc,acnametable,xls.file.name),
@@ -91,6 +90,7 @@ rafi.cma.v1<-function(rafi.data.loc,acnametable="acname_table.csv",file.ret="cor
     #out$boxMax<-cma$ac.data[,"Max"]
     #names(out$boxMax)<-cma$classes
     out$nconstraints<-nconstraints
+    out$inflation<-inflation.rate
     class(out)<-"cma"
     return(out)
 }
@@ -273,10 +273,11 @@ rafi.data.check<-function(rafi.data.loc,acnametable){
 #'   and tax information.  This table also includes box and custom constraints
 #'   There is also corr the correlation matrix, and/or cov for the covariance
 #'   matrix and nconstraints for the number of constraints.
-rafi.cma.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",xls.file.name="Asset-Allocation-Interactive-Data.xlsx"){
+rafi.cma.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",
+                      xls.file.name="Asset-Allocation-Interactive-Data.xlsx"){
     rafi.data<-rafi.load.v2(rafi.data.loc,acnametable,xls.file.name)
     inflation.rate<-rafi.data$ret[1,"Expected Return (Nominal)"]-rafi.data$ret[1,"Expected Return (Real)"]
-    ac_names<-ac_names<-data.frame(read_xlsx(paste0(rafi.data.loc,acnametable),sheet="acname_table"))
+    ac_names<-ac_names<-data.frame(readxl::read_xlsx(paste0(rafi.data.loc,acnametable),sheet="acname_table"))
     row.names(ac_names)<-ac_names$rt_class_names
     first.constraint.col<-match("Max",colnames(ac_names))+1 # Constraints begin after Max Col
     ac_names<-ac_names[row.names(rafi.data$ret),] #re order to match ret which should match corr
@@ -305,6 +306,7 @@ rafi.cma.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",xls.file.nam
     out$corr<-as.matrix(rafi.data$corr[idx,idx])
     out$cov<- as.matrix(rafi.data$cov[idx,idx])
     out$nconstraints<-nconstraints
+    out$inflation<-inflation.rate
     class(out)<-"cma"
     return(out)
 }
@@ -327,9 +329,9 @@ rafi.load.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",xls.file.na
     # The order and text of the asset class names of the returns and correlations may not match.  We want the classes to be
     # in the same order and have corresponding names.
     # A csv file is used to lookup new names for the asset classes. It also contains other information
-    ac_names<-read_xlsx(paste0(rafi.data.loc,acnametable),sheet="acname_table")
+    ac_names<-readxl::read_xlsx(paste0(rafi.data.loc,acnametable),sheet="acname_table")
     #first.constraint.col<-match("Max",colnames(ac_names))+1 # Constraints begin after Max Col
-    rafi<-rafi.read.xls.v2(rafi.data.loc,xls.file.name="Asset-Allocation-Interactive-Data.xlsx")
+    rafi<-rafi.read.xls.v2(rafi.data.loc,xls.file.name)
     row.names(rafi$ret)<-unlist(sapply(rafi$ret$`Asset Class`,acname_lookup,type="ret",ac_names=ac_names))
     rafi$nclasses<-nrow(rafi$ret)
     rownames(rafi$corr)<-sapply(colnames(rafi$corr),acname_lookup,type="corr",ac_names=ac_names)
@@ -367,11 +369,13 @@ rafi.read.xls.v2<-function(rafi.data.loc,xls.file.name="Asset-Allocation-Interac
         rng.date<-"C50"
     }
     out<-list()
-    out$as_of_date<-read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Returns",range=rng.date)
-    out$ret<-as.data.frame(read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Returns",range=rng.return))
-    rafi.corr<-read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Risk.Matrix",range=rng.corr)
+    out$as_of_date<-as.character(readxl::read_xlsx(paste0(rafi.data.loc,xls.file.name),
+                                 sheet="Expected.Returns",range=rng.date,col_names = FALSE))
+    out$as_of_date<-unlist(out$as_of_date)
+    out$ret<-as.data.frame(readxl::read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Returns",range=rng.return))
+    rafi.corr<-readxl::read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Risk.Matrix",range=rng.corr)
     row.names(rafi.corr)<-names(rafi.corr)
-    rafi.cov<-read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Risk.Matrix",range=rng.cov)
+    rafi.cov<-readxl::read_xlsx(paste0(rafi.data.loc,xls.file.name),sheet="Expected.Risk.Matrix",range=rng.cov)
     row.names(rafi.cov)<-names(rafi.cov)
     out$corr<-rafi.corr
     out$cov<-rafi.cov
