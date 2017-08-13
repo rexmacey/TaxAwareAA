@@ -275,7 +275,7 @@ print.cma<-function(cma){
     temp<-round(100*cma$ac.data[,c("geom.ret","risk")],1)
     colnames(temp)<-c("Return%","Risk%")
     print(temp)
-    cat("Inflation",cma$inflation,"\n" )
+    cat("Inflation",round(100*cma$inflation,1),"\n" )
     plot(cma$ac.data[,"risk"]*100,cma$ac.data[,"geom.ret"]*100,
          main="Asset Class Assumptions", xlab="Std Dev %", ylab="Return %",col="blue",pch=16)
     loc<-100*cma$ac.data[,c("risk","geom.ret")]
