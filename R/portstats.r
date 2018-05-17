@@ -23,7 +23,7 @@ portvar<-function(w,cma){
 #' @return value representing the variance of the portfolio
 #'
 portret<-function(w,cma){
-    pvar<-portvar(w,cma.ta)
+    pvar<-portvar(w,cma)
     return(as.numeric(sum(w*cma$ret))-pvar/2)
 }
 
@@ -83,9 +83,9 @@ calc.ac.wts<-function(w,cma.ta){
 #' 
 calc.future.at.value<-function(w,cma.ta,horizon){
     pret<-portret(w,cma.ta)
-    prisk<-portrisk(w,cma.ta)
     pvar<-portvar(w,cma.ta)
     out<-sum(cma.ta$account.values)*(1+pret-pvar/2)^horizon
+    return(out)
 }
 
 #' Return using the square-root-of-T rule
