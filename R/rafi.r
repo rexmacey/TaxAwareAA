@@ -277,7 +277,7 @@ rafi.cma.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",
                       xls.file.name="Asset-Allocation-Interactive-Data.xlsx"){
     rafi.data<-rafi.load.v2(rafi.data.loc,acnametable,xls.file.name)
     inflation.rate<-rafi.data$ret[1,"Expected Return (Nominal)"]-rafi.data$ret[1,"Expected Return (Real)"]
-    ac_names<-ac_names<-data.frame(readxl::read_xlsx(paste0(rafi.data.loc,acnametable),sheet="acname_table"))
+    ac_names<-data.frame(readxl::read_xlsx(paste0(rafi.data.loc,acnametable),sheet="acname_table"))
     row.names(ac_names)<-ac_names$rt_class_names
     first.constraint.col<-match("Max",colnames(ac_names))+1 # Constraints begin after Max Col
     ac_names<-ac_names[row.names(rafi.data$ret),] #re order to match ret which should match corr
@@ -291,7 +291,7 @@ rafi.cma.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",
     val.change<-geom.ret-yield-growth
     ac.data<-data.frame(ret=arith.ret,geom.ret=geom.ret,yld=yield,growth=growth,
                         valChg=val.change,risk=rafi.data$ret$Volatility)
-    ac.data<-cbind(ac.data,ac_names[row.names(rafi.data$ret),c("IntOrd","IntTE","DivQual","DivOrd","Turnover","LTCG","STCG","ForeignTaxWithheld","Expense","Min","Max")])
+    ac.data<-cbind(ac.data,ac_names[row.names(rafi.data$ret),c("AssetClass","LongName","IntOrd","IntTE","DivQual","DivOrd","Turnover","LTCG","STCG","ForeignTaxWithheld","Expense","Min","Max")])
     nconstraints<-ncol(ac_names)-first.constraint.col+1
     if (nconstraints>0) {
         ac.data<-cbind(ac.data,ac_names[row.names(rafi.data$ret),first.constraint.col:ncol(ac_names)])
