@@ -13,9 +13,10 @@
 #'   deferred account, and at.return.exempt for an exempt account.
 #'
 ATReturn.calc<-function(cma,investor){
+    vars<-c("yld","growth","valChg","IntOrd","IntTE","DivQual","DivOrd","Turnover","LTCG","STCG")
     out<-list()
-    out$at.return.taxable.geom<-apply(cma$ac.data,1,function(x) ATReturn.taxable(
-        yld=x["yld"], growth=x["growth"], valChg=x["valChg"],
+    out$at.return.taxable.geom<-apply(cma$ac.data[,vars],1,function(x) ATReturn.taxable(
+        yld=as.numeric(x["yld"]), growth=x["growth"], valChg=x["valChg"],
         intOrd=x["IntOrd"], intTE=x["IntTE"], divQual=x["DivQual"],
         divOrd=x["DivOrd"],
         turnover=x["Turnover"], LTCG=x["LTCG"], STCG=x["STCG"],
@@ -81,6 +82,7 @@ ATReturn.taxable<-function(yld,growth,valChg,intOrd,intTE,divQual,divOrd,turnove
                            taxROrdInc,taxRQDiv,taxRLTCG,taxRSTCG,taxRState,horizon=10){
     # Calculates the After-Tax return from before tax inputs and tax rates.  Assumes losses can be used and
     # assumes gains are realized and taxed at horizon at long-term rate.
+    yld<-as.numeric(yld)
     price<-100 # initialize value and basis and price to $100
     shares<-1
     v<-price*shares
@@ -150,6 +152,10 @@ ATReturn.deferred<-function(yld,growth,valChg,foreigntaxwithheld,taxROrdInc,risk
 }
 
 ATReturn.exempt<-function(yld,growth,valChg,foreigntaxwithheld,horizon=10){
+    yld<-as.numeric(yld)
+    growth<-as.numeric(growth)
+    valChg<-as.numeric(valChg)
+    foreigntaxwithheld<-as.numeric(foreigntaxwithheld)
     price<-100 # initialize value and basis and price to $100
     shares<-1
     v<-price*shares

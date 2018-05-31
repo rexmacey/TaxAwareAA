@@ -271,15 +271,19 @@ print.cma.ta<-function(cma.ta, kable=TRUE, ...){
 #'
 print.cma<-function(cma){
     cat("As of",cma$as_of_date,"\n" )
-    cat("Number of asset classes",cma$nclasses,"\n")
-    temp<-round(100*cma$ac.data[,c("geom.ret","risk")],1)
-    colnames(temp)<-c("Return%","Risk%")
-    print(temp)
-    cat("Inflation",round(100*cma$inflation,1),"\n" )
+    cat("Number of asset classes",cma$nclasses,"\n\n")
+    #temp<-cma$ac.data[,c("LongName","AssetClass","geom.ret","risk")]
+    temp<-cbind(cma$ac.data[,c("LongName","AssetClass","geom.ret","risk")],row.names(cma$ac.data))
+    temp[,3:4]<-round(100*temp[,3:4],1)
+    colnames(temp)<-c("Asset Class","Broad Class","Return%","Risk%","Abbrev")
+    temp<-temp[order(temp$'Risk%',temp$'Asset Class'),]
+    print(temp, right=FALSE, row.names=FALSE)
+    cat("\nInflation ",round(100*cma$inflation,1),"% \n",sep="" )
     plot(cma$ac.data[,"risk"]*100,cma$ac.data[,"geom.ret"]*100,
          main="Asset Class Assumptions", xlab="Std Dev %", ylab="Return %",col="blue",pch=16)
     loc<-100*cma$ac.data[,c("risk","geom.ret")]
     loc[,2]<-loc[,2]-0.25 #move down a bit
     text(loc,cma$classes)
+    abline(h=100*cma$inflation,col="red")
     invisible(NULL)
 }

@@ -9,7 +9,7 @@
 #' @return value representing the variance of the portfolio
 #'
 portvar<-function(w,cma){
-    return(as.numeric(t(w) %*% cma$cov %*% w))
+    return(max(0,as.numeric(t(w) %*% cma$cov %*% w)))
 }
 
 #' Calculate the return of a portfolio
@@ -24,7 +24,7 @@ portvar<-function(w,cma){
 #'
 portret<-function(w,cma){
     pvar<-portvar(w,cma)
-    return(as.numeric(sum(w*cma$ret))-pvar/2)
+    return(as.numeric(w %*% cma$ret)-pvar/2)
 }
 
 #' Calculate the standard deviation of a portfolio

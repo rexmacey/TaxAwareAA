@@ -83,6 +83,7 @@ rafi.cma.v1<-function(rafi.data.loc,acnametable="acname_table.csv",file.ret="cor
     out$classes<-row.names(ac_names)
     out$nclasses<-rafi.data$nclasses
     out$ac.data<-ac.data
+    out$ret <- ac.data$ret
     out$corr<-as.matrix(rafi.data$corr)
     out$cov<- as.matrix((ac.data$risk %*% t(ac.data$risk)) * out$corr)
     #out$boxMin<-cma$ac.data[,"Min"]
@@ -303,6 +304,7 @@ rafi.cma.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",
     out$classes<-row.names(ac_names[idx,])
     out$nclasses<-sum(idx)
     out$ac.data<-ac.data[idx,]
+    out$ret <- ac.data$ret[idx,]
     out$corr<-as.matrix(rafi.data$corr[idx,idx])
     out$cov<- as.matrix(rafi.data$cov[idx,idx])
     out$nconstraints<-nconstraints
