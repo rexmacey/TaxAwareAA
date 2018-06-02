@@ -304,7 +304,7 @@ rafi.cma.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",
     out$classes<-row.names(ac_names[idx,])
     out$nclasses<-sum(idx)
     out$ac.data<-ac.data[idx,]
-    out$ret <- ac.data$ret[idx,]
+    out$ret <- ac.data$ret[idx]
     out$corr<-as.matrix(rafi.data$corr[idx,idx])
     out$cov<- as.matrix(rafi.data$cov[idx,idx])
     out$nconstraints<-nconstraints

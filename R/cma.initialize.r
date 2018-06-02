@@ -64,7 +64,8 @@ cma.initialize<-function(as_of_date=NULL){
 #'   match length of constraints. Default List().
 #' @keywords asset allocation efficient frontier.
 #' @export
-#' @return A list containing items related to the CMA.
+#' @return A list containing items related to the CMA including: as of date, classes, number of classes
+#' ret, yield, growth, risk, correlations, covariance, box min, box max and constraints.
 #'
 cma.create<-function(as_of_date=NULL, classes=list(), ret=vector("numeric"), yield=vector("numeric"),
                      growth=vector("numeric"), risk=vector("numeric"), corr=NULL, cov=NULL,
@@ -83,6 +84,10 @@ cma.create<-function(as_of_date=NULL, classes=list(), ret=vector("numeric"), yie
     } else {
         out$cov <- cov
     }
+    if(!matrixcalc::is.positive.semi.definite(out$cov)) {
+        out$cov <- Matrix::nearPD(out$cov, corr=FALSE, keepDiag=TRUE, maxit=1000)$mat
+    }
+    out$cov<-as.matrix(out$cov)
     if (boxMin==0){
         out$boxMin<-rep(0,length(classes))
     } else {
@@ -217,8 +222,10 @@ cma.ta.create<-function(cma,investor){
     cov.ta<-risk.ta %*% t(risk.ta) * corr.ta # adjusted for taxes
     rownames(cov.ta)<-class.names
     colnames(cov.ta)<-class.names
-    cov.ta<-Matrix::nearPD(cov.ta) #nearest positive definite matrix
-    out$cov<-cov.ta$mat
+    if(!matrixcalc::is.positive.semi.definite(cov.ta)) {
+        cov.ta <- Matrix::nearPD(out$cov, corr=FALSE, keepDiag=TRUE, maxit=1000)$mat
+    }
+    cov.ta<-as.matrix(cov.ta)
     out$boxMin<-cma$ac.data$Min
     names(out$boxMin)<-cma$classes
     out$boxMax<-cma$ac.data$Max

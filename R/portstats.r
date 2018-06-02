@@ -8,8 +8,19 @@
 #' @export
 #' @return value representing the variance of the portfolio
 #'
-portvar<-function(w,cma){
-    return(max(0,as.numeric(t(w) %*% cma$cov %*% w)))
+portvar<-function(weights,cma){
+    out = tryCatch({
+        max(0,drop(t(weights) %*% cma$cov %*% weights))
+    }, warning = function(w){
+        print(paste("function: portvar",w))
+    }, error = function(e){
+        print(paste("function: portvar",e))
+        print(paste("weights:",weights))
+        print(paste("length weights:", length(weights)))
+        print(paste("dim cov:", dim(cma$cov)))
+        NaN
+    })
+    return(out)
 }
 
 #' Calculate the return of a portfolio
@@ -22,9 +33,19 @@ portvar<-function(w,cma){
 #' @export
 #' @return value representing the variance of the portfolio
 #'
-portret<-function(w,cma){
-    pvar<-portvar(w,cma)
-    return(as.numeric(w %*% cma$ret)-pvar/2)
+portret<-function(weights,cma){
+    out = tryCatch({
+        drop(weights %*% cma$ret) - portvar(weights,cma)/2
+    }, warning = function(w){
+        print(paste("function: portret",w))
+    }, error = function(e){
+        print(paste("function: portret",e))
+        print(paste("weights:",weights))
+        print(paste("length weights:", length(weights)))
+        print(paste("length cma$ret:", length(cma$ret)))
+        NaN
+    })
+    return(out)
 }
 
 #' Calculate the standard deviation of a portfolio
@@ -37,9 +58,21 @@ portret<-function(w,cma){
 #' @export
 #' @return value representing the standard deviation of the portfolio
 #'
-portrisk<-function(w,cma){
-    return(as.numeric(portvar(w,cma)^.5))
+portrisk<-function(weights,cma){
+    out = tryCatch({
+        drop(portvar(weights,cma)^.5)
+    }, warning = function(w){
+        print(paste("function: portrisk",w))
+    }, error = function(e){
+        print(paste("function: portrisk",e))
+        print(paste("weights:",weights))
+        print(paste("length weights:", length(weights)))
+        print(paste("dim cov:", dim(cma$cov)))
+        NaN
+    })
+    return(out)
 }
+
 #' Calculates a measure of diversification
 #' 
 #' This score is scaled such that if one equally invested in n assets, the score will be n.  Thus higher values indicate greater diversification.
@@ -68,7 +101,7 @@ calc.ac.wts<-function(w,cma.ta){
     out<-w[1:(cma.ta$base.nclasses)]+w[(cma.ta$base.nclasses+1):(2*cma.ta$base.nclasses)]+
                          w[(2*cma.ta$base.nclasses+1):(3*cma.ta$base.nclasses)]
     names(out)<-cma.ta$base.classes
-    return(out)
+    return(drop(out))
 }
 
 #' Calculate the future after-tax value of a portfolio
