@@ -86,6 +86,10 @@ rafi.cma.v1<-function(rafi.data.loc,acnametable="acname_table.csv",file.ret="cor
     out$ret <- ac.data$ret
     out$corr<-as.matrix(rafi.data$corr)
     out$cov<- as.matrix((ac.data$risk %*% t(ac.data$risk)) * out$corr)
+    if(!matrixcalc::is.positive.semi.definite(out$cov)) {
+        out$cov <- Matrix::nearPD(out$cov, corr=FALSE, keepDiag=TRUE, maxit=1000)$mat
+    }
+    out$cov<-as.matrix(out$cov)
     #out$boxMin<-cma$ac.data[,"Min"]
     #names(out$boxMin)<-cma$classes
     #out$boxMax<-cma$ac.data[,"Max"]
@@ -307,6 +311,10 @@ rafi.cma.v2<-function(rafi.data.loc,acnametable="acname_table.xlsx",
     out$ret <- ac.data$ret[idx]
     out$corr<-as.matrix(rafi.data$corr[idx,idx])
     out$cov<- as.matrix(rafi.data$cov[idx,idx])
+    if(!matrixcalc::is.positive.semi.definite(out$cov)) {
+        out$cov <- Matrix::nearPD(out$cov, corr=FALSE, keepDiag=TRUE, maxit=1000)$mat
+    }
+    out$cov<-as.matrix(out$cov)
     out$nconstraints<-nconstraints
     out$inflation<-inflation.rate
     class(out)<-"cma"

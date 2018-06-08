@@ -223,9 +223,9 @@ cma.ta.create<-function(cma,investor){
     rownames(cov.ta)<-class.names
     colnames(cov.ta)<-class.names
     if(!matrixcalc::is.positive.semi.definite(cov.ta)) {
-        cov.ta <- Matrix::nearPD(out$cov, corr=FALSE, keepDiag=TRUE, maxit=1000)$mat
+        cov.ta <- Matrix::nearPD(cov.ta, corr=FALSE, keepDiag=TRUE, maxit=1000)$mat
     }
-    cov.ta<-as.matrix(cov.ta)
+    out$cov.ta<-as.matrix(cov.ta)
     out$boxMin<-cma$ac.data$Min
     names(out$boxMin)<-cma$classes
     out$boxMax<-cma$ac.data$Max

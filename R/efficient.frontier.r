@@ -82,8 +82,8 @@ find.minmax.return<-function(cma.ta){ # return min and max expected returns that
              rep(0,length(cma.ta$constraints))) # user defined constraints >=
     const.dir=c("=",rep(">=",length(rhs)-1))
     out<-list()
-    out$min<-solveLP(objVec,rhs,A,maximum=FALSE,const.dir = const.dir,lpSolve = TRUE)
-    out$max<-solveLP(objVec,rhs,A,maximum=TRUE,const.dir = const.dir,lpSolve=TRUE)
+    out$min<-linprog::solveLP(objVec,rhs,A,maximum=FALSE,const.dir = const.dir,lpSolve = TRUE)
+    out$max<-linprog::solveLP(objVec,rhs,A,maximum=TRUE,const.dir = const.dir,lpSolve=TRUE)
     return(out)
 }
 
@@ -143,7 +143,7 @@ optimize.target.return<-function(target.ret,cma.ta,tol=0.00004){
            rep(-tol,nclasses),
            rep(-tol,length(cma.ta$constraints))) # user defined constraints >=
 
-    out <- try(solve.QP(Dmat=cov.pd, dvec = rep(0,nclasses), Amat=t(A), bvec=f, meq=0))
+    out <- try(quadprog::solve.QP(Dmat=cov.pd, dvec = rep(0,nclasses), Amat=t(A), bvec=f, meq=0))
     if (class(out)=="try-error") out<-NULL
     return(out)
 }
@@ -186,7 +186,9 @@ resample.target.risk<-function(target.risk,cma.ta,n.samples=100,thresh=0,tol=0.0
     require(Matrix)
     tol_resamp<-0.00004
     # fun return the risk of a portfolio with with weights of x minus the target risk
-    fun <-function(x,cmf.x) portrisk(optimize.target.return(x,cmf.x)$solution,cmf.x)-target.risk
+    fun <-function(x,cmf.x) portrisk(optimize.target.return(x,cmf.x)$solution,cmf.x) - target.risk
+    f.upper <- max(diag(cma.ta$cov.ta)^.5) - target.risk # upper bound of fun
+    f.lower <- -target.risk
     resamp.mat<-matrix(0,nrow=n.samples,ncol=cma.ta$nclasses+2)
     colnames(resamp.mat)<-c("Return","Risk",cma.ta$classes)
     set.seed(101)
@@ -201,9 +203,11 @@ resample.target.risk<-function(target.risk,cma.ta,n.samples=100,thresh=0,tol=0.0
                 R<-xts(mvrnorm(n=120,cma.ta$ret,cma.ta$cov,
                                empirical=FALSE),order.by=seq(as.Date("2000/12/31"),by="month",length.out=120))
                 cmf.resamp$ret<-colMeans(R)
-                cmf.resamp$cov<-nearPD(cov(R))$mat
+                cmf.resamp$cov<-as.matrix(Matrix::nearPD(cov(R))$mat)
                 minmax<-find.minmax.return(cmf.resamp)
-                targetret<-try(uniroot(fun,c(minmax$min$opt+.0005,minmax$max$opt),cmf.x=cmf.resamp)$root,silent = TRUE)
+                targetret<-try(uniroot(fun, interval = c(minmax$min$opt+.0005,minmax$max$opt), 
+                                       cmf.x=cmf.resamp, f.lower=f.lower, f.upper=f.upper)$root, 
+                               silent = TRUE)
                 result_type_uniroot<-class(targetret)
                 if (result_type_uniroot=="try-error"){
                     iter.uniroot<-iter.uniroot+1
