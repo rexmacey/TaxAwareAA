@@ -4,10 +4,11 @@
 \alias{cma.create}
 \title{Create CMA (Capital Market Assumptions)}
 \usage{
-cma.create(as_of_date = NULL, classes = list(), ret = vector("numeric"),
-  yield = vector("numeric"), growth = vector("numeric"),
-  risk = vector("numeric"), corr = NULL, cov = NULL, boxMin = 0,
-  boxMax = 1, constraints = list(), constraints.names = list())
+cma.create(as_of_date = NULL, classes = list(),
+  ret = vector("numeric"), yield = vector("numeric"),
+  growth = vector("numeric"), risk = vector("numeric"), corr = NULL,
+  cov = NULL, boxMin = 0, boxMax = 1, constraints = list(),
+  constraints.names = list())
 }
 \arguments{
 \item{as_of_date}{Date assumptions were created. Default NULL.}
@@ -48,7 +49,8 @@ constraint. Default List().}
 match length of constraints. Default List().}
 }
 \value{
-A list containing items related to the CMA.
+A list containing items related to the CMA including: as of date, classes, number of classes
+ret, yield, growth, risk, correlations, covariance, box min, box max and constraints.
 }
 \description{
 This function creates a cma object.

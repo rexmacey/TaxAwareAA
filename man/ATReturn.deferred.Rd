@@ -4,8 +4,8 @@
 \alias{ATReturn.deferred}
 \title{Calculation of after-tax return in a deferred account}
 \usage{
-ATReturn.deferred(yld, growth, valChg, foreigntaxwithheld, taxROrdInc, risk,
-  horizon = 10)
+ATReturn.deferred(yld, growth, valChg, foreigntaxwithheld, taxROrdInc,
+  risk, horizon = 10)
 }
 \arguments{
 \item{yld}{Yield on the investment}

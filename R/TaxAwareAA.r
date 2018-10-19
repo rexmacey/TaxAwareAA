@@ -77,6 +77,7 @@
 #' @importFrom stats uniroot
 #' @importFrom graphics plot
 #' @importFrom graphics text
+#' @importFrom MASS mvrnorm
 #' @import yaml
-#' @import Mass mvrnorm
+
 NULL

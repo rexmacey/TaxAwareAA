@@ -4,13 +4,13 @@
 \alias{portvar}
 \title{Calculate the variance of a portfolio}
 \usage{
-portvar(w, cma)
+portvar(weights, cma)
 }
 \arguments{
-\item{w}{Weights of the assets in a portfolio}
-
 \item{cma}{Capital market assumptions.  Must have a cov item that is a square
 matrix each dimension matching the length of w}
+
+\item{w}{Weights of the assets in a portfolio}
 }
 \value{
 value representing the variance of the portfolio

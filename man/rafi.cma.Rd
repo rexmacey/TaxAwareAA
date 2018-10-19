@@ -4,11 +4,12 @@
 \alias{rafi.cma}
 \title{Load RAFI data into a cma}
 \usage{
-rafi.cma(version = "v2", rafi.data.loc, acnametable = "acname_table.xlsx",
+rafi.cma(version = "v2", rafi.data.loc,
+  acnametable = "acname_table.xlsx",
   xls.file.name = "Asset-Allocation-Interactive-Data.xlsx",
   file.ret = "core_asset_class_expected_returns.csv",
   file.corr = "core_asset_class_correlations_forecasted.csv",
-  inflation.rate = Get10YrBEInflationRate()$rate)
+  inflation.rate = NULL)
 }
 \arguments{
 \item{version}{Version (either v1 or v2). Use v1 if RAFI files are in CSV format

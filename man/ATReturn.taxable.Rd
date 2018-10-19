@@ -4,9 +4,9 @@
 \alias{ATReturn.taxable}
 \title{Calculation of after-tax return in a taxable account}
 \usage{
-ATReturn.taxable(yld, growth, valChg, intOrd, intTE, divQual, divOrd, turnover,
-  LTCG, STCG, taxROrdInc, taxRQDiv, taxRLTCG, taxRSTCG, taxRState,
-  horizon = 10)
+ATReturn.taxable(yld, growth, valChg, intOrd, intTE, divQual, divOrd,
+  turnover, LTCG, STCG, taxROrdInc, taxRQDiv, taxRLTCG, taxRSTCG,
+  taxRState, horizon = 10)
 }
 \arguments{
 \item{yld}{Yield on the investment}

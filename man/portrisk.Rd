@@ -4,13 +4,13 @@
 \alias{portrisk}
 \title{Calculate the standard deviation of a portfolio}
 \usage{
-portrisk(w, cma)
+portrisk(weights, cma)
 }
 \arguments{
-\item{w}{Weights of the assets in a portfolio}
-
 \item{cma}{Capital market assumptions.  Must have a cov item that is a square
 matrix each dimension matching the length of w}
+
+\item{w}{Weights of the assets in a portfolio}
 }
 \value{
 value representing the standard deviation of the portfolio

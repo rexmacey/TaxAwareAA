@@ -4,10 +4,10 @@
 \alias{investor.create}
 \title{Create Investor}
 \usage{
-investor.create(value.taxable, value.deferred, value.exempt, horizon = 10,
-  taxrate.state = 0, taxrate.ordinc = 0, taxrate.LTCG = 0,
-  taxrate.STCG = 0, taxrate.qualdiv = 0, taxrate.surcharge = 0.038,
-  income = NULL)
+investor.create(value.taxable, value.deferred, value.exempt,
+  horizon = 10, taxrate.state = 0, taxrate.ordinc = 0,
+  taxrate.LTCG = 0, taxrate.STCG = 0, taxrate.qualdiv = 0,
+  taxrate.surcharge = 0.038, income = NULL)
 }
 \arguments{
 \item{value.taxable}{Value in taxable account}

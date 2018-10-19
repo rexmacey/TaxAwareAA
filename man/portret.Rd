@@ -4,13 +4,13 @@
 \alias{portret}
 \title{Calculate the return of a portfolio}
 \usage{
-portret(w, cma)
+portret(weights, cma)
 }
 \arguments{
-\item{w}{Weights of the assets in a portfolio}
-
 \item{cma}{Capital market assumptions.  Must have a ret item with a length
 the length of w}
+
+\item{w}{Weights of the assets in a portfolio}
 }
 \value{
 value representing the variance of the portfolio
