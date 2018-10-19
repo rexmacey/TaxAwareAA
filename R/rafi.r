@@ -28,7 +28,8 @@ rafi.cma <- function(version="v2",rafi.data.loc,acnametable="acname_table.xlsx",
                      xls.file.name="Asset-Allocation-Interactive-Data.xlsx",
                      file.ret="core_asset_class_expected_returns.csv",
                      file.corr="core_asset_class_correlations_forecasted.csv",
-                     inflation.rate=Get10YrBEInflationRate()$rate){
+                     inflation.rate=NULL){
+    inflation.rate <- ifelse(is.null(inflation.rate), Get10YrBEInflationRate()$rate, inflation.rate)
     return(switch(toupper(version),
            V1 = rafi.cma.v1(rafi.data.loc,acnametable,file.ret,file.corr,inflation.rate),
            V2 = rafi.cma.v2(rafi.data.loc,acnametable,xls.file.name),

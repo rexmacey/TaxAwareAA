@@ -226,10 +226,13 @@ cma.ta.create<-function(cma,investor){
         cov.ta <- Matrix::nearPD(cov.ta, corr=FALSE, keepDiag=TRUE, maxit=1000)$mat
     }
     out$cov.ta<-as.matrix(cov.ta)
-    out$boxMin<-cma$ac.data$Min
+    out$boxMin <-0
     names(out$boxMin)<-cma$classes
     out$boxMax<-cma$ac.data$Max
     names(out$boxMax)<-cma$classes
+    out$boxMax <- pmin(out$boxMax, c(rep(investor["taxed.pct"], cma$nclasses), 
+                                 rep(investor["deferred.pct"], cma$nclasses), 
+                                 rep(investor["exempt.pct"], cma$nclasses)))
     out$constraints<-list()
     for (i in 1:cma$nconstraints){
         out$constraints[[i]]<-cma$ac.data[,first.constraint.col+i-1]

@@ -1,6 +1,6 @@
 Package: TaxAwareAA
 Title: Tax Aware Asset Allocation
-Version: 0.0.0.9036
+Version: 0.0.0.9038
 Authors@R: person("Rex", "Macey", email = "rex@macey.us", role = c("aut", "cre"))
 Description: Creates a mean variant efficient portfolio considering taxes.
 Depends:
@@ -9,7 +9,7 @@ License: GPL-3
 LazyData: true
 RoxygenNote: 6.0.1
 Imports: quadprog, MASS, Quandl, xts,
-    linprog, Matrix, readxl, yaml
+    linprog, Matrix, readxl, yaml, tibble
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
