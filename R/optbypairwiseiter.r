@@ -41,7 +41,7 @@ calc_slack <- function(x, boxmin, boxmax, maxdelta){
 maximize_pairwise <- function(x, LB, UB, objFun, maxdelta, ...){
     bestx <- x
     maxobj <- objFun(bestx, ...)
-    slack <- calc_slack(bestx, LB, UB, maxdelta)
+    slack <- calc_slack(x=bestx, boxmin=LB, boxmax=UB, maxdelta=maxdelta)
     bestfx <- maxobj
     
     iter <- 0
@@ -69,11 +69,11 @@ maximize_pairwise <- function(x, LB, UB, objFun, maxdelta, ...){
             bestx[besti] <- bestx[besti] + delta
             bestx[bestj] <- bestx[bestj] - delta
             maxobj <- bestfx
-            slack <- calc_slack(bestx, boxmin, boxmax, maxdelta)
+            slack <- calc_slack(bestx, LB, UB, maxdelta)
             cat(iter, maxobj, "\n")
         } else {
             maxdelta <- maxdelta/2
-            slack <- calc_slack(bestx, boxmin, boxmax, maxdelta)
+            slack <- calc_slack(bestx, LB, UB, maxdelta)
         }
         
     }
@@ -276,9 +276,7 @@ find_min_risk_portfolio <- function(maxdelta, ...){
     initwts[min.risk.class] <- pctassets[1]
     initwts[min.risk.class + cma$nclasses] <- pctassets[2]
     initwts[min.risk.class + cma$nclasses * 2] <- pctassets[3]
-    boxmax <- pmin(c(cma.ta$boxMax,   # smaller of asset class max and weight of entire account
-                     cma.ta$boxMax,
-                     cma.ta$boxMax), 
+    boxmax <- pmin(cma.ta$boxMax,   # smaller of asset class max and weight of entire account
                    c(rep(pctassets[1], cma$nclasses),
                      rep(pctassets[2], cma$nclasses),
                      rep(pctassets[3], cma$nclasses)))
@@ -287,7 +285,7 @@ find_min_risk_portfolio <- function(maxdelta, ...){
                  UB=boxmax,
                  objFun=aa_objective_min_risk,
                  maxdelta =maxdelta,
-                 ...)
+                 cma.ta=cma.ta, cma=cma, OptimizationParameters=OptimizationParameters, verbose=FALSE)
     return(temp)
 }
 
@@ -303,7 +301,7 @@ find_min_risk_portfolio <- function(maxdelta, ...){
 #' @param maxdelta Amount by which weights may be changed in one iteration
 #' @param ... Parameters to pass to maximize_pairwise function
 #'
-#' @return
+#' @return list of values
 #' @export
 #'
 #' @examples find_max_return_portfolio(initwts, 0.03, ...)
@@ -316,9 +314,7 @@ find_max_return_portfolio <- function(initwts, maxdelta, ...){
         initwts[max.return.class + cma$nclasses * 2] <- pctassets[3]
     }
     ### box constraints
-    boxmax <- pmin(c(cma.ta$boxMax,   # smaller of asset class max and weight of entire account
-                     cma.ta$boxMax,
-                     cma.ta$boxMax), 
+    boxmax <- pmin(cma.ta$boxMax,   # smaller of asset class max and weight of entire account
                    c(rep(pctassets[1], cma$nclasses),
                      rep(pctassets[2], cma$nclasses),
                      rep(pctassets[3], cma$nclasses)))
@@ -353,42 +349,34 @@ find_max_return_portfolio <- function(initwts, maxdelta, ...){
 #'
 #' @examples create.eff.pairwise(cma, cma.ta, OptimizationParameters, pctassets, 10)
 create.eff.pairwise <- function(cma, cma.ta, OptimizationParameters, pctassets, n.portfolios=10){
-    add_eff_info <- function(obj){
-        names(obj$x)<-cma.ta$classes
-        obj$x.ac <- TaxAwareAA::calc.ac.wts(obj$x, cma.ta)
-        names(obj$x.ac)<- cma$classes
-        obj$WtdReturn <- TaxAwareAA::portret(obj$x, cma.ta) * OptimizationParameters$WtAfterTax + 
-            TaxAwareAA::portret(obj$x.ac, cma) * (1 - OptimizationParameters$WtAfterTax)
-        obj$Risk <- TaxAwareAA::portrisk(obj$x.ac, cma)
-        return(obj)
-    }
+   
     nclasses<-cma.ta$nclasses
     out<-matrix(0,nrow=n.portfolios,ncol=2+nclasses)
     colnames(out)<-c("Return","Risk",cma.ta$classes)
-    minrisk <- find_min_risk_portfolio(OptimizationParameters$MinNonZeroWt,
-                                       cma.ta=cma.ta, cma=cma, OptimizationParameters=OptimizationParameters)
-    minrisk <- add_eff_info(minrisk)
+    minrisk <- find_min_risk_portfolio(OptimizationParameters$MinNonZeroWt, cma=cma, 
+                                       cma.ta=cma.ta, pctassets = pctassets, OptimizationParameters=OptimizationParameters)
+    minrisk <- add_port_info(minrisk, cma, cma.ta, OptimizationParameters)
     risk.budget <- 1000
     maxret <- find_max_return_portfolio(maxdelta = OptimizationParameters$MinNonZeroWt,
                                       cma.ta=cma.ta, cma=cma, risk.budget=risk.budget, OptimizationParameters=OptimizationParameters, verbose= FALSE)
-    maxret <- add_eff_info(maxret)
+    maxret <- add_port_info(maxret, cma, cma.ta, OptimizationParameters)
     
-    out[1,1] <- minrisk$WtdReturn
-    out[1,2] <- minrisk$Risk
+    out[1,1] <- minrisk$wtdreturn
+    out[1,2] <- minrisk$pretax.risk
     out[1,3:(2+nclasses)] <- minrisk$x
-    out[n.portfolios,1] <- maxret$WtdReturn
-    out[n.portfolios,2] <- maxret$Risk
+    out[n.portfolios,1] <- maxret$wtdreturn
+    out[n.portfolios,2] <- maxret$pretax.risk
     out[n.portfolios,3:(2+nclasses)] <- maxret$x
-    target.risk.vector <- seq(minrisk$Risk, maxret$Risk, length.out = n.portfolios)
+    target.risk.vector <- seq(minrisk$pretax.risk, maxret$pretax.risk, length.out = n.portfolios)
     for(i in 2:(n.portfolios-1)){
         # initwts <- out[i-1, 3:(2+nclasses)]
         #maxrisk <- target.risk.vector[i]
         
         effport <- find_max_return_portfolio(initwts = out[i-1, 3:(2+nclasses)], maxdelta = OptimizationParameters$MinNonZeroWt,
                                              cma.ta=cma.ta, cma=cma, risk.budget = target.risk.vector[i], OptimizationParameters=OptimizationParameters, verbose=FALSE)
-        effport <- add_eff_info(effport)
-        out[i,1] <- effport$WtdReturn
-        out[i,2] <- effport$Risk
+        effport <- add_port_info(effport, cma, cma.ta, OptimizationParameters)
+        out[i,1] <- effport$wtdreturn
+        out[i,2] <- effport$pretax.risk
         out[i,3:(2+nclasses)] <- effport$x
     }
     rownames(out)<-paste0("EffPt",seq(1,nrow(out)))
@@ -404,7 +392,7 @@ create.eff.pairwise <- function(cma, cma.ta, OptimizationParameters, pctassets, 
 #' takes that definition as input and creates an expanded definition including the classes with zero weights both
 #' pretax and aftertax
 #'
-#' @param short.benchmark 
+#' @param benchmark.txt Benchmark in text format (e.g. "Munis=0.6,USLarge=0.4") 
 #' @param cma CMA object
 #' @param cma.ta CMA.ta object
 #' @param investor Investor object
@@ -413,14 +401,52 @@ create.eff.pairwise <- function(cma, cma.ta, OptimizationParameters, pctassets, 
 #' @export
 #'
 #' @examples expand.benchmark(short.benchmark, cma, cma.ta, investor)
-expand.benchmark <- function(short.benchmark, cma, cma.ta, investor){
-    wts.bench<-rep(0,cma$nclasses)
-    names(wts.bench)<-cma$classes
+create.benchmark <- function(benchmark.txt, cma, cma.ta, investor, OptimizationParameters){
+    short.benchmark<-eval(parse(text=paste0("c(",benchmark.txt,")")))
+    out <- list()
+    out$x.ac <- rep(0,cma$nclasses)
+    names(out$x.ac)<-cma$classes
     for (i in 1:length(short.benchmark)){
-        wts.bench[names(short.benchmark[i])]<-short.benchmark[i]
+        out$x.ac[names(short.benchmark[i])]<-short.benchmark[i]
     }
-    wts.bench.ta<-c(wts.bench*investor["taxed"],wts.bench*investor["deferred"],wts.bench*investor["exempt"]) /
-        (investor["taxed"]+investor["deferred"]+investor["exempt"])
-    names(wts.bench.ta)<-cma.ta$classes
-    return(list(wts.bench = wts.bench, wts.bench.ta = wts.bench.ta))
+    out$x<-c(out$x.ac * investor["taxed.pct"],
+             out$x.ac * investor["deferred.pct"], 
+             out$x.ac * investor["exempt.pct"])
+    names(out$x)<-cma.ta$classes
+    out <- add_port_info(out, cma, cma.ta, OptimizationParameters)
+    return(out)
+}
+
+#' Adds portfolio information to a mix
+#'
+#' @param obj A list object containing x (obj$x) which are the aftertax weights
+#' @param cma capital market assumptions
+#' @param cma.ta capital market assumptions, tax-adjusted
+#' @param OptimizationParameters optimization paramters
+#'
+#' @return The list with additional information including the pretax wts, return and risk stats
+#' @export
+#'
+#' @examples add_port_info(ojb, cma, cma.ta, OptimizationParameters)
+add_port_info <- function(obj, cma, cma.ta, OptimizationParameters){
+    if(missing(cma.ta)){
+        names(obj$x) <- cma$classes
+        obj$x.ac <- obj$x
+        obj$pretax.ret <- TaxAwareAA::portret(obj$x.ac, cma)
+        obj$pretax.risk <- TaxAwareAA::portrisk(obj$x.ac, cma)
+        obj$aftertax.ret <- NULL
+        obj$aftertax.risk <- NULL
+        obj$wtdreturn <- obj$pretax.ret
+    } else {
+        names(obj$x)<-cma.ta$classes
+        obj$x.ac <- TaxAwareAA::calc.ac.wts(obj$x, cma.ta)
+        names(obj$x.ac)<- cma$classes    
+        obj$pretax.ret <- TaxAwareAA::portret(obj$x.ac, cma)
+        obj$pretax.risk <- TaxAwareAA::portrisk(obj$x.ac, cma)
+        obj$aftertax.ret <- TaxAwareAA::portret(obj$x, cma.ta)
+        obj$aftertax.risk <- TaxAwareAA::portrisk(obj$x, cma.ta)
+        obj$wtdreturn <- obj$aftertax.ret * OptimizationParameters$WtAfterTax + 
+            obj$pretax.ret * (1 - OptimizationParameters$WtAfterTax)
+    }
+    return(obj)
 }

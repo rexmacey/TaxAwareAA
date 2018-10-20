@@ -226,13 +226,13 @@ cma.ta.create<-function(cma,investor){
         cov.ta <- Matrix::nearPD(cov.ta, corr=FALSE, keepDiag=TRUE, maxit=1000)$mat
     }
     out$cov.ta<-as.matrix(cov.ta)
-    out$boxMin <-0
-    names(out$boxMin)<-cma$classes
+    out$boxMin <- rep(0, length(class.names))
+    names(out$boxMin) <- class.names #cma$classes
     out$boxMax<-cma$ac.data$Max
-    names(out$boxMax)<-cma$classes
     out$boxMax <- pmin(out$boxMax, c(rep(investor["taxed.pct"], cma$nclasses), 
                                  rep(investor["deferred.pct"], cma$nclasses), 
                                  rep(investor["exempt.pct"], cma$nclasses)))
+    names(out$boxMax)<-class.names #cma$classes
     out$constraints<-list()
     for (i in 1:cma$nconstraints){
         out$constraints[[i]]<-cma$ac.data[,first.constraint.col+i-1]
@@ -240,6 +240,8 @@ cma.ta.create<-function(cma,investor){
     }
     out$base.classes<-cma$classes
     out$base.nclasses<-cma$nclasses
+    out$base.boxMin <- cma$ac.data$Min
+    out$base.boxMax <- cma$ac.data$Max
     out$account.values<-c(investor["taxed"],investor["deferred"],investor["exempt"])   #investor$account.values
     out$inflation<-cma$inflation
     class(out)<-"cma.ta"
@@ -260,7 +262,7 @@ print.cma.ta<-function(cma.ta, kable=TRUE, ...){
     cat("Number of asset classes (per account type)",nclasses.base,"\n")
     temp<-data.frame(matrix(cma.ta$ret.geom*100,ncol=3))
     temp<-cbind(temp,100*diag(matrix(cma.ta$cov,nrow = cma.ta$nclasses))[1:nclasses.base]^.5)
-    temp<-cbind(temp,cma.ta$boxMin*100,cma.ta$boxMax*100)
+    temp<-cbind(temp,cma.ta$base.boxMin*100,cma.ta$base.boxMax*100)
     rownames(temp)<-cma.ta$base.classes
     colnames(temp)<-c("Taxable Ret%","Deferred Ret%","Exempt Ret%","Risk%","MinWt","MaxWt")
     temp<-round(temp,2)
