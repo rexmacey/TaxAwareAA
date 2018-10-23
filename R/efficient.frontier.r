@@ -77,8 +77,8 @@ find.minmax.return<-function(cma.ta){ # return min and max expected returns that
              account.values[1]/sum(account.values)-tol, # allocation to taxable =
              account.values[2]/sum(account.values)-tol, # allocation to deferred =
              account.values[3]/sum(account.values)-tol, # allocation to exempt =
-             cma.ta$boxMin, # box min >=
-             -cma.ta$boxMax, # box max >=
+             cma.ta$base.boxMin, # box min >=
+             -cma.ta$base.boxMax, # box max >=
              rep(0,length(cma.ta$constraints))) # user defined constraints >=
     const.dir=c("=",rep(">=",length(rhs)-1))
     out<-list()
@@ -138,8 +138,8 @@ optimize.target.return<-function(target.ret,cma.ta,tol=0.00004){
            -(account.values[1]/sum(account.values)+tol), # allocation to taxable =
            -(account.values[2]/sum(account.values)+tol), # allocation to deferred =
            -(account.values[3]/sum(account.values)+tol), # allocation to exempt =
-           cma.ta$boxMin-tol, # box min >=
-           -(cma.ta$boxMax+tol), # box max >=
+           cma.ta$base.boxMin-tol, # box min >=
+           -(cma.ta$base.boxMax+tol), # box max >=
            rep(-tol,nclasses),
            rep(-tol,length(cma.ta$constraints))) # user defined constraints >=
 

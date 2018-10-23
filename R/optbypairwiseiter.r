@@ -40,7 +40,7 @@ calc_slack <- function(x, boxmin, boxmax, maxdelta){
 #' @examples maximize_pairwise(x, LB, UB, objFun, maxdelta, ...)
 maximize_pairwise <- function(x, LB, UB, objFun, maxdelta, ...){
     bestx <- x
-    maxobj <- objFun(bestx, ...)
+    maxobj <- objFun(x=bestx, ...)
     slack <- calc_slack(x=bestx, boxmin=LB, boxmax=UB, maxdelta=maxdelta)
     bestfx <- maxobj
     
@@ -70,7 +70,7 @@ maximize_pairwise <- function(x, LB, UB, objFun, maxdelta, ...){
             bestx[bestj] <- bestx[bestj] - delta
             maxobj <- bestfx
             slack <- calc_slack(bestx, LB, UB, maxdelta)
-            cat(iter, maxobj, "\n")
+            # cat(iter, maxobj, "\n")
         } else {
             maxdelta <- maxdelta/2
             slack <- calc_slack(bestx, LB, UB, maxdelta)
@@ -111,7 +111,7 @@ maximize_pairwise <- function(x, LB, UB, objFun, maxdelta, ...){
 #' @export 
 #'
 #' @examples aa_objective(x, cma.ta, cma, wts.bench.ta, wts.bench, OptimizationParameters, ClassGroupConstraints, pctassets, curx=NULL)
-aa_objective <- function(x, cma.ta, cma, wts.bench.ta, wts.bench, OptimizationParameters, ClassGroupConstraints, pctassets, curx=NULL, verbose=FALSE) {
+aa_objective_rel_risk <- function(x, cma.ta, cma, wts.bench.ta, wts.bench, OptimizationParameters, ClassGroupConstraints, pctassets, curx=NULL, verbose=FALSE) {
     x.ac <- TaxAwareAA::calc.ac.wts(x, cma.ta)
     riskslack <- TaxAwareAA::portrisk(x.ac, cma) - TaxAwareAA::portrisk(wts.bench, cma)
     TEslack <- TaxAwareAA::portrisk(x.ac - wts.bench, cma) - OptimizationParameters$MaxTrackingError # pretax tracking error
@@ -262,7 +262,6 @@ aa_objective_abs_risk <- function(x, cma.ta, cma, risk.budget, OptimizationParam
 
 #' Find the minimum risk portfolio
 #'
-#' @param maxdelta Maximum a weight may be changed in the pair wise algo
 #' @param ... parameters to pass to the aa_objective_min_risk function
 #'
 #' @return Results of maximize_pairwise function
@@ -270,7 +269,7 @@ aa_objective_abs_risk <- function(x, cma.ta, cma, risk.budget, OptimizationParam
 #' @seealso [maximize_pairwise()] for more detail on return values.
 #'
 #' @examples find_min_risk_portfolio(0.03, cma.ta, cma, 0.03, OptimizationParameters, FALSE)
-find_min_risk_portfolio <- function(maxdelta, ...){
+find_min_risk_portfolio <- function(...){
     min.risk.class <- which.min(cma$ac.data$risk)
     initwts <- rep(0, cma.ta$nclasses)
     initwts[min.risk.class] <- pctassets[1]
@@ -280,13 +279,19 @@ find_min_risk_portfolio <- function(maxdelta, ...){
                    c(rep(pctassets[1], cma$nclasses),
                      rep(pctassets[2], cma$nclasses),
                      rep(pctassets[3], cma$nclasses)))
-    temp <- maximize_pairwise(x=initwts,
-                 LB=rep(0, cma.ta$nclasses),
-                 UB=boxmax,
-                 objFun=aa_objective_min_risk,
-                 maxdelta =maxdelta,
-                 cma.ta=cma.ta, cma=cma, OptimizationParameters=OptimizationParameters, verbose=FALSE)
-    return(temp)
+    maxdelta <- c(0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.10)
+   # maxdelta <- c(0.03, 0.04, 0.05)
+    newfun <- function(md, ...){
+        temp <- maximize_pairwise(x=initwts,
+                                  LB=rep(0, cma.ta$nclasses),
+                                  UB=boxmax,
+                                  objFun=aa_objective_min_risk,
+                                  maxdelta = md,
+                                  ...)
+    }
+    temp <- lapply(maxdelta, newfun, ...)
+    out <- temp[[which.max(sapply(temp, "[", "MaxObj"))]]
+    return(out)
 }
 
 # names(pctassets) <- c("taxed.pct", "deferred.pct", "exempt.pct")
@@ -297,34 +302,43 @@ find_min_risk_portfolio <- function(maxdelta, ...){
 
 #' Find Max Return portfolios for a risk budget
 #'
-#' @param initwts Initial Portfolio weigths
-#' @param maxdelta Amount by which weights may be changed in one iteration
-#' @param ... Parameters to pass to maximize_pairwise function
+#' @param ... Parameters to pass to aa_objective_abs_risk except for x
 #'
 #' @return list of values
 #' @export
 #'
-#' @examples find_max_return_portfolio(initwts, 0.03, ...)
-find_max_return_portfolio <- function(initwts, maxdelta, ...){
-    if(missing(initwts)){
-        max.return.class <- which.max(cma$ac.data$geom.ret)
-        initwts <- rep(0, cma.ta$nclasses)
-        initwts[max.return.class] <- pctassets[1]
-        initwts[max.return.class + cma$nclasses] <- pctassets[2]
-        initwts[max.return.class + cma$nclasses * 2] <- pctassets[3]
-    }
+#' @examples 
+#' find_max_return_portfolio(cma.ta=cma.ta, cma=cma, risk.budget=rb, OptimizationParameters=OptimizationParameters, verbose=FALSE)
+find_max_return_portfolio <- function( ...){
+    max.return.class <- which.max(cma$ac.data$geom.ret)
+    initwts <- rep(0, cma.ta$nclasses)
+    initwts[max.return.class] <- pctassets[1]
+    initwts[max.return.class + cma$nclasses] <- pctassets[2]
+    initwts[max.return.class + cma$nclasses * 2] <- pctassets[3]
+    
     ### box constraints
     boxmax <- pmin(cma.ta$boxMax,   # smaller of asset class max and weight of entire account
                    c(rep(pctassets[1], cma$nclasses),
                      rep(pctassets[2], cma$nclasses),
                      rep(pctassets[3], cma$nclasses)))
-    temp <- maximize_pairwise(x=initwts,
-                 LB=rep(0, cma.ta$nclasses),
-                 UB=boxmax,
-                 objFun=aa_objective_abs_risk,
-                 maxdelta =maxdelta,
-                 ...)
-    return(temp)
+    maxdelta <- c(0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.10)
+  #  maxdelta <- c(0.03, 0.04, 0.05)
+    newfun <- function(md, ...){
+        if("risk.budget" %in% names(list(...))){
+            objFunction <- aa_objective_abs_risk
+        } else {
+            objFunction <- aa_objective_rel_risk
+        }
+        temp <- maximize_pairwise(x=initwts,
+                                  LB=rep(0, cma.ta$nclasses),
+                                  UB=boxmax,
+                                  objFun= objFunction,
+                                  maxdelta = md,
+                                  ...)
+    }
+    temp <- lapply(maxdelta, newfun, ...)
+    out <- temp[[which.max(sapply(temp, "[", "MaxObj"))]]
+    return(out)
 }
 
 # risk.budget <- 1000
@@ -353,12 +367,11 @@ create.eff.pairwise <- function(cma, cma.ta, OptimizationParameters, pctassets, 
     nclasses<-cma.ta$nclasses
     out<-matrix(0,nrow=n.portfolios,ncol=2+nclasses)
     colnames(out)<-c("Return","Risk",cma.ta$classes)
-    minrisk <- find_min_risk_portfolio(OptimizationParameters$MinNonZeroWt, cma=cma, 
-                                       cma.ta=cma.ta, pctassets = pctassets, OptimizationParameters=OptimizationParameters)
+    minrisk <- find_min_risk_portfolio(cma=cma, 
+                                       cma.ta=cma.ta, OptimizationParameters=OptimizationParameters)
     minrisk <- add_port_info(minrisk, cma, cma.ta, OptimizationParameters)
     risk.budget <- 1000
-    maxret <- find_max_return_portfolio(maxdelta = OptimizationParameters$MinNonZeroWt,
-                                      cma.ta=cma.ta, cma=cma, risk.budget=risk.budget, OptimizationParameters=OptimizationParameters, verbose= FALSE)
+    maxret <- find_max_return_portfolio(cma.ta=cma.ta, cma=cma, risk.budget=risk.budget, OptimizationParameters=OptimizationParameters, verbose= FALSE)
     maxret <- add_port_info(maxret, cma, cma.ta, OptimizationParameters)
     
     out[1,1] <- minrisk$wtdreturn
@@ -368,12 +381,20 @@ create.eff.pairwise <- function(cma, cma.ta, OptimizationParameters, pctassets, 
     out[n.portfolios,2] <- maxret$pretax.risk
     out[n.portfolios,3:(2+nclasses)] <- maxret$x
     target.risk.vector <- seq(minrisk$pretax.risk, maxret$pretax.risk, length.out = n.portfolios)
+    initwts <- c(rep(pctassets[1]/cma$nclasses, cma$nclasses),
+                 rep(pctassets[2]/cma$nclasses, cma$nclasses),
+                 rep(pctassets[3]/cma$nclasses, cma$nclasses))
+    
+    names(initwts) <- cma.ta$classes
     for(i in 2:(n.portfolios-1)){
-        # initwts <- out[i-1, 3:(2+nclasses)]
-        #maxrisk <- target.risk.vector[i]
+        risk.budget <- target.risk.vector[i]
+        effport <- find_max_return_portfolio(cma.ta=cma.ta, cma=cma, risk.budget = risk.budget, OptimizationParameters=OptimizationParameters, verbose=FALSE)
         
-        effport <- find_max_return_portfolio(initwts = out[i-1, 3:(2+nclasses)], maxdelta = OptimizationParameters$MinNonZeroWt,
-                                             cma.ta=cma.ta, cma=cma, risk.budget = target.risk.vector[i], OptimizationParameters=OptimizationParameters, verbose=FALSE)
+        #effport <- find_max_return_portfolio(initwts = initwts, maxdelta = OptimizationParameters$MinNonZeroWt,
+        #                                     cma.ta=cma.ta, cma=cma, risk.budget = risk.budget, OptimizationParameters=OptimizationParameters, verbose=FALSE)
+        
+        # effport <- find_max_return_portfolio(initwts = out[i-1, 3:(2+nclasses)], maxdelta = OptimizationParameters$MinNonZeroWt,
+        #                                     cma.ta=cma.ta, cma=cma, risk.budget = risk.budget, OptimizationParameters=OptimizationParameters, verbose=FALSE)
         effport <- add_port_info(effport, cma, cma.ta, OptimizationParameters)
         out[i,1] <- effport$wtdreturn
         out[i,2] <- effport$pretax.risk
@@ -449,4 +470,40 @@ add_port_info <- function(obj, cma, cma.ta, OptimizationParameters){
             obj$pretax.ret * (1 - OptimizationParameters$WtAfterTax)
     }
     return(obj)
+}
+
+#' Make allocation tables
+#' Give a set of weights, the function returns two tables.  The weights in the allocationacrossaccount table
+#' will sum to 100.  Each value represents the allocation of the entire portfolio.  The weights in the
+#' allocationbyaccount shows the weight within each account.  The weights in each account will sum to 100.
+#' These are useful for display. 
+#' 
+#' @param wts Weights across assets
+#' @param cma.ta capital market assumptions, tax-advantaged
+#'
+#' @return list with two tables allocationacrossaccount and allocationbyaccount
+#' @export
+#'
+#' @examples make_alloc_tables(wts, cma.ta)
+make_alloc_tables<-function(wts, cma.ta){
+    wts.df<-matrix(0,ncol=4,nrow=cma.ta$base.nclasses+1) #wts across accounts
+    rownames(wts.df)<-c(cma.ta$base.classes,"Total")
+    colnames(wts.df)<-c("Taxable","Deferred","Exempt","Total")    
+    wts.df[1:cma.ta$base.nclasses,"Taxable"]<-wts[1:(cma.ta$base.nclasses)]
+    wts.df[1:cma.ta$base.nclasses,"Deferred"]<-wts[(cma.ta$base.nclasses+1):(2*cma.ta$base.nclasses)]
+    wts.df[1:cma.ta$base.nclasses,"Exempt"]<-wts[(2*cma.ta$base.nclasses+1):(3*cma.ta$base.nclasses)]    
+    wts.df[wts.df<0]<-0 # remove negative wts
+    wts.df<-wts.df/sum(wts.df) # adjust to sum to 1.0000 exactly
+    wts.df[,"Total"]<-rowSums(wts.df)
+    wts.df2<-round(100*prop.table(wts.df,2),2) # proportion within account
+    wts.df["Total",]<-colSums(wts.df)
+    wts.df<-round(100*wts.df,1)
+    wts.df2["Total",]<-colSums(wts.df2)
+    idx<-wts.df[,"Total"]>0.01 # remove rows with zero weights
+    wts.df<-wts.df[idx,]
+    idx<-wts.df["Total",]>0 # remove account types with no weight
+    wts.df2<-wts.df2[,idx]
+    idx <- wts.df2[,"Total"]>0
+    wts.df2 <- wts.df2[idx,]
+    return(list(allocationacrossaccount=wts.df, allocationbyaccount=wts.df2))
 }
