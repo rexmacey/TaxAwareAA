@@ -1,3 +1,80 @@
+#' Calculate penalties 
+#' Calculates the penalties used in objective functions
+#' If wts.bench is present, then the penalty will include evaluation of risk relative to the risk of the benchmark
+#' and tracking error.
+#' If risk.budget is a parameter then the penalty will include evaluation of risk over the value of risk budget.
+#' If curx is a parameter then the penalty will include evaluation of turnover.
+#'
+#' @param ... These parameters must include x - wts; cma.ta, cma, OptimizationParameters, verbose.
+#'
+#' @return if verbose, a vector of penalties including the total, otherwise just the scalar total.
+#' @export
+#'
+#' @examples
+calc_penalties <- function(...) {
+    ddd <- list(...)
+    if(! "x" %in% names(ddd)) stop("x (wts) missing from calc_penalties.")
+    if(! "cma.ta" %in% names(ddd)) stop("cma.ta missing from calc_penalties.")
+    if(! "cma" %in% names(ddd)) stop("cma missing from calc_penalties.")
+    if(! "OptimizationParameters" %in% names(ddd)) stop("OptimizationParameters missing from calc_penalties.")
+    if(! "verbose" %in% names(ddd)) verbose <- FALSE
+    out <- numeric(12)
+    names(out) <- unlist(strsplit("Risk,TrackingError,NonZeroWts,MinNonZeroWt,Turnover,BoxMin,BoxMax,UDConstraint,ClassMin,ClassMax,CashMin,Total", ","))
+    x.ac <- TaxAwareAA::calc.ac.wts(ddd$x, ddd$cma.ta)
+    if("wts.bench" %in% names(ddd)){
+        riskslack <- TaxAwareAA::portrisk(x.ac, ddd$cma) - TaxAwareAA::portrisk(ddd$wts.bench, ddd$cma)
+        out["Risk"] <- ifelse(riskslack <= 0, 0, riskslack^2)
+        TEslack <- TaxAwareAA::portrisk(x.ac - ddd$wts.bench, ddd$cma) - ddd$OptimizationParameters$MaxTrackingError # pretax tracking error
+        out["TrackingError"] <- ifelse(TEslack <= 0, 0 , TEslack^2)
+    }
+    if("risk.budget" %in% names(ddd)){
+        riskslack <- TaxAwareAA::portrisk(x.ac, ddd$cma) - ddd$risk.budget
+        out["Risk"] <- ifelse(riskslack <= 0, 0, riskslack^2)
+    }
+    if("ClassGroupConstraints" %in% names(ddd)){
+        ngroups <- length(ClassGroupConstraints)/2
+        for(i in 1:ngroups){
+            cnames <- unlist(ddd$ClassGroupConstraints[i])
+            ctol <- unlist(ddd$ClassGroupConstraints[ngroups + i])
+            portgroupalloc <- sum(x.ac[cnames])
+            benchgroupmin <- sum(ddd$wts.bench[cnames]) + ctol[1]
+            benchgroupmax <- sum(ddd$wts.bench[cnames]) + ctol[2]
+            out["ClassGroupConstraints"] <- ifelse(portgroupalloc >= benchgroupmin, 0, (portgroupalloc - benchgroupmin)^2) +
+                                            ifelse(portgroupalloc <= benchgroupmax, 0, (portgroupalloc - benchgroupmax)^2)    
+        }
+    }
+    nzwts <- sum(x.ac[ddd$cma$ac.data$Min==0] > 0) # number of non-zero wts for classes with no minimum. 
+    out["NonZeroWts"] <-  ifelse(nzwts >= ddd$OptimizationParameters$MinBaseClasses, 0, (nzwts - ddd$OptimizationParameters$MinBaseClasses)^2) +
+                          ifelse(nzwts <= ddd$OptimizationParameters$MaxBaseClasses, 0, (nzwts - ddd$OptimizationParameters$MaxBaseClasses)^2) 
+    minnzwt <- ifelse(nzwts == 0, 0,  min(x.ac[ddd$cma$ac.data$Min==0][x.ac[ddd$cma$ac.data$Min==0]>0])) # min of wts that are non-zero and have a nonzero minimum
+    out["MinNonZeroWt"]  <- ifelse(minnzwt >= OptimizationParameters$MinNonZeroWt, 0, (minnzwt - OptimizationParameters$MinNonZeroWt)^2)
+    if("curx" %in% names(ddd)){
+        turnoverslack <- ifelse(is.null(ddd$curx), 0, ddd$OptimizationParameters$MaxTurnover - sum(abs(ddd$x - ddd$curx)) / 2)    
+        out["Turnover"] <- ifelse(turnoverslack <=0, 0, turnoverslack^2)
+    }
+    out["ClassMin"] <- sum((x.ac[x.ac<ddd$cma$ac.data$Min] - ddd$cma$ac.data$Min[x.ac<ddd$cma$ac.data$Min])^2) # ac box min
+    out["ClassMax"] <- sum((x.ac[x.ac>ddd$cma$ac.data$Max] - ddd$cma$ac.data$Max[x.ac>ddd$cma$ac.data$Max])^2) # ac box max
+    ac.data.ncol <- ncol(cma$ac.data)
+    for(i in (ac.data.ncol - ddd$cma$nconstraints + 1):ac.data.ncol){ # user defined constraints
+        udconstraint <- sum(x.ac * ddd$cma$ac.data[,i])
+        out["UDConstraint"] <- out["UDConstraint"] + ifelse(udconstraint >= 0, 0, udconstraint^2)
+        
+    }
+    if(OptimizationParameters$MinAcctCash & "pctassets" %in% names(ddd)){  
+        cashclass <- which(ddd$cma$classes == ddd$OptimizationParameters$CashName)
+        cashwts <- c(ddd$x[cashclass], ddd$x[ddd$cma$nclasses + cashclass], ddd$x[2 * ddd$cma$nclasses + cashclass])
+        cashpct <- cashwts / ddd$pctassets[1:3]
+        out["CashMin"] <- sum(pmin(cashpct - ddd$cma$ac.data$Min[cashclass], 0)^2)
+    }
+    out["Total"] <- sum(out) * ddd$OptimizationParameters$PenaltyFactor
+    if(ddd$verbose){
+        return(out)
+    } else {
+        return(out["Total"])
+    }
+}
+
+
 #' Calculates slack 
 #' 
 #' Calculates weights that can be added or subtracted from a portfolios without violating box contraints.
@@ -113,53 +190,19 @@ maximize_pairwise <- function(x, LB, UB, objFun, maxdelta, ...){
 #' @examples aa_objective(x, cma.ta, cma, wts.bench.ta, wts.bench, OptimizationParameters, ClassGroupConstraints, pctassets, curx=NULL)
 aa_objective_rel_risk <- function(x, cma.ta, cma, wts.bench.ta, wts.bench, OptimizationParameters, ClassGroupConstraints, pctassets, curx=NULL, verbose=FALSE) {
     x.ac <- TaxAwareAA::calc.ac.wts(x, cma.ta)
-    riskslack <- TaxAwareAA::portrisk(x.ac, cma) - TaxAwareAA::portrisk(wts.bench, cma)
-    TEslack <- TaxAwareAA::portrisk(x.ac - wts.bench, cma) - OptimizationParameters$MaxTrackingError # pretax tracking error
-    ac.data.ncol <- ncol(cma$ac.data)
-    nzwts <- sum(x.ac[cma$ac.data$Min==0] > 0) # number of non-zero wts for classes with no minimum. 
-    minnzwt <- ifelse(nzwts == 0, 0,  min(x.ac[cma$ac.data$Min==0][x.ac[cma$ac.data$Min==0]>0])) # min of wts that are non-zero and have a nonzero minimum
-    turnoverslack <- ifelse(is.null(curx), 0, OptimizationParameters$MaxTurnover - sum(abs(x - curx)) / 2)
     wtdexcessreturn <- (TaxAwareAA::portret(x, cma.ta) - TaxAwareAA::portret(wts.bench.ta, cma.ta)) * OptimizationParameters$WtAfterTax + 
         (TaxAwareAA::portret(x.ac, cma) - TaxAwareAA::portret(wts.bench, cma)) * (1 - OptimizationParameters$WtAfterTax)
-    penalties <- sum((x.ac[x.ac>cma$ac.data$Max] - cma$ac.data$Max[x.ac>cma$ac.data$Max])^2) + # ac box max
-        sum((x.ac[x.ac<cma$ac.data$Min] - cma$ac.data$Min[x.ac<cma$ac.data$Min])^2) + # ac box min
-        ifelse(turnoverslack <=0, 0, turnoverslack^2) +  
-        ifelse(riskslack <= 0, 0, riskslack^2) + 
-        ifelse(TEslack <= 0, 0 , TEslack^2) 
-    for(i in (ac.data.ncol - cma$nconstraints + 1):ac.data.ncol){ # user defined constraints
-        udconstraint <- sum(x.ac * cma$ac.data[,i])
-        penalties <-penalties + ifelse(udconstraint >= 0, 0, udconstraint^2)
-    }
-    ngroups <- length(ClassGroupConstraints)/2
-    for(i in 1:ngroups){
-        cnames <- unlist(ClassGroupConstraints[i])
-        ctol <- unlist(ClassGroupConstraints[ngroups + i])
-        portgroupalloc <- sum(x.ac[cnames])
-        benchgroupmin <- sum(wts.bench[cnames]) + ctol[1]
-        benchgroupmax <- sum(wts.bench[cnames]) + ctol[2]
-        penalties <-penalties + 
-            ifelse(portgroupalloc >= benchgroupmin, 0, (portgroupalloc - benchgroupmin)^2) +
-            ifelse(portgroupalloc <= benchgroupmax, 0, (portgroupalloc - benchgroupmax)^2)    
-    }
-    penalties <- penalties + 
-        ifelse(nzwts >= OptimizationParameters$MinBaseClasses, 0, (nzwts - OptimizationParameters$MinBaseClasses)^2) +
-        ifelse(nzwts <= OptimizationParameters$MaxBaseClasses, 0, (nzwts - OptimizationParameters$MaxBaseClasses)^2) +
-        ifelse(minnzwt >= OptimizationParameters$MinNonZeroWt, 0, (minnzwt - OptimizationParameters$MinNonZeroWt)^2) # +
-    
-    if(OptimizationParameters$MinAcctCash){  
-        cashclass <- which(cma$classes == OptimizationParameters$CashName)
-        cashwts <- c(x[cashclass], x[cma$nclasses + cashclass], x[2 * cma$nclasses + cashclass])
-        cashpct <- cashwts / pctassets
-        penalties <- penalties + sum(pmin(cashpct - cma$ac.data$Min[cashclass], 0)^2)
-    }
-    names(penalties) <- NULL
+    penalties <- calc_penalties(x=x, cma.ta=cma.ta, cma=cma, wts.bench.ta = wts.bench.ta, wts.bench = wts.bench, OptimizationParameters = OptimizationParameters, 
+                                ClassGroupConstraints = ClassGroupConstraints, pctassets = pctassets, curx=curx,verbose = TRUE)
     if(verbose){
         return(list(
             wtdexcessreturn = 100 * wtdexcessreturn,
-            penalties = penalties*OptimizationParameters$PenaltyFactor,
-            objectivevalue = 100*wtdexcessreturn - penalties*OptimizationParameters$PenaltyFactor))
+            penalties = penalties["Total"],
+            objectivevalue = 100*wtdexcessreturn - penalties["Total"],
+            penalty_detail <- penalties))
+            
     } else {
-        return(100*wtdexcessreturn - penalties*OptimizationParameters$PenaltyFactor)
+        return(100*wtdexcessreturn - penalties["Total"])
     }
 }
 
@@ -185,27 +228,15 @@ aa_objective_rel_risk <- function(x, cma.ta, cma, wts.bench.ta, wts.bench, Optim
 aa_objective_min_risk <- function(x, cma.ta, cma, OptimizationParameters, verbose=FALSE) {
     x.ac <- TaxAwareAA::calc.ac.wts(x, cma.ta)
     pretax.port.risk <- TaxAwareAA::portrisk(x.ac, cma) 
-    ac.data.ncol <- ncol(cma$ac.data)
-    nzwts <- sum(x.ac > 0) # number of non-zero wts
-    minnzwt <- ifelse(sum(x.ac > 0) == 0, 0,  min(x.ac[x.ac > 0]))
-    penalties <- sum((x.ac[x.ac>cma$ac.data$Max] - cma$ac.data$Max[x.ac>cma$ac.data$Max])^2) + # ac box max
-        sum((x.ac[x.ac<cma$ac.data$Min] - cma$ac.data$Min[x.ac<cma$ac.data$Min])^2) # ac box min
-    for(i in (ac.data.ncol - cma$nconstraints + 1):ac.data.ncol){ # user defined constraints
-        udconstraint <- sum(x.ac * cma$ac.data[,i])
-        penalties <-penalties + ifelse(udconstraint >= 0, 0, udconstraint^2)
-    }
-    penalties <- penalties + 
-        ifelse(nzwts >= OptimizationParameters$MinBaseClasses, 0, (nzwts - OptimizationParameters$MinBaseClasses)^2) +
-        ifelse(nzwts <= OptimizationParameters$MaxBaseClasses, 0, (nzwts - OptimizationParameters$MaxBaseClasses)^2) +
-        ifelse(minnzwt >= OptimizationParameters$MinNonZeroWt, 0, (minnzwt - OptimizationParameters$MinNonZeroWt)^2)
-    names(penalties) <- NULL
+    penalties <- calc_penalties(x=x, cma.ta=cma.ta, cma=cma, OptimizationParameters = OptimizationParameters, verbose = TRUE)
     if(verbose){
         return(list(
             risk = 100 * pretax.port.risk,
-            penalties = penalties*OptimizationParameters$PenaltyFactor,
-            objectivevalue = -100*pretax.port.risk - penalties*OptimizationParameters$PenaltyFactor))
+            penalties = penalties["Total"],
+            objectivevalue = -100*pretax.port.risk - penalties["Total"],
+            penalty_detail <- penalties))
     } else {
-        return(-100*pretax.port.risk - penalties*OptimizationParameters$PenaltyFactor)
+        return(-100*pretax.port.risk - penalties["Total"])
     }
 }
 
@@ -231,32 +262,17 @@ aa_objective_min_risk <- function(x, cma.ta, cma, OptimizationParameters, verbos
 #' @examples aa_objective_abs_risk(x, cma.ta, cma, risk.budget, OptimizationParameters)
 aa_objective_abs_risk <- function(x, cma.ta, cma, risk.budget, OptimizationParameters, verbose=FALSE) {
     x.ac <- TaxAwareAA::calc.ac.wts(x, cma.ta)
-    # sumxm1sqr <- (round(sum(x),5) - 1)^2
-    riskslack <- TaxAwareAA::portrisk(x.ac, cma) - risk.budget
-    ac.data.ncol <- ncol(cma$ac.data)
-    nzwts <- sum(x.ac > 0) # number of non-zero wts
-    minnzwt <- ifelse(sum(x.ac > 0) == 0, 0,  min(x.ac[x.ac > 0]))
     wtdreturn <- TaxAwareAA::portret(x, cma.ta) * OptimizationParameters$WtAfterTax + 
         TaxAwareAA::portret(x.ac, cma) * (1 - OptimizationParameters$WtAfterTax)
-    penalties <- sum((x.ac[x.ac>cma$ac.data$Max] - cma$ac.data$Max[x.ac>cma$ac.data$Max])^2) + # ac box max
-        sum((x.ac[x.ac<cma$ac.data$Min] - cma$ac.data$Min[x.ac<cma$ac.data$Min])^2) + # ac box min
-        ifelse(riskslack <= 0, 0, riskslack^2)
-    for(i in (ac.data.ncol - cma$nconstraints + 1):ac.data.ncol){ # user defined constraints
-        udconstraint <- sum(x.ac * cma$ac.data[,i])
-        penalties <-penalties + ifelse(udconstraint >= 0, 0, udconstraint^2)
-    }
-    penalties <- penalties + 
-        ifelse(nzwts >= OptimizationParameters$MinBaseClasses, 0, (nzwts - OptimizationParameters$MinBaseClasses)^2) +
-        ifelse(nzwts <= OptimizationParameters$MaxBaseClasses, 0, (nzwts - OptimizationParameters$MaxBaseClasses)^2) +
-        ifelse(minnzwt >= OptimizationParameters$MinNonZeroWt, 0, (minnzwt - OptimizationParameters$MinNonZeroWt)^2)
-    names(penalties) <- NULL
+    penalties <- calc_penalties(x=x, cma.ta=cma.ta, cma=cma, risk.budget=risk.budget, OptimizationParameters = OptimizationParameters, verbose = TRUE)
     if(verbose){
         return(list(
             wtdreturn = 100 * wtdreturn,
-            penalties = penalties*OptimizationParameters$PenaltyFactor,
-            objectivevalue = 100*wtdreturn - penalties*OptimizationParameters$PenaltyFactor))
+            penalties = penalties["Total"],
+            objectivevalue = 100*wtdreturn - penalties["Total"],
+            penalty_detail <- penalties))
     } else {
-        return(100*wtdreturn - penalties*OptimizationParameters$PenaltyFactor)
+        return(100*wtdreturn - penalties["Total"])
     }
 }
 
@@ -291,6 +307,7 @@ find_min_risk_portfolio <- function(...){
     }
     temp <- lapply(maxdelta, newfun, ...)
     out <- temp[[which.max(sapply(temp, "[", "MaxObj"))]]
+    out <- add_port_info(out, cma, cma.ta, OptimizationParameters)
     return(out)
 }
 
@@ -338,6 +355,7 @@ find_max_return_portfolio <- function( ...){
     }
     temp <- lapply(maxdelta, newfun, ...)
     out <- temp[[which.max(sapply(temp, "[", "MaxObj"))]]
+    out <- add_port_info(out, cma, cma.ta, OptimizationParameters)
     return(out)
 }
 
