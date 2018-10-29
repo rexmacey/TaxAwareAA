@@ -380,7 +380,7 @@ find_max_return_portfolio <- function( ...){
 #' @export
 #'
 #' @examples create.eff.pairwise(cma, cma.ta, OptimizationParameters, pctassets, 10)
-create.eff.pairwise <- function(cma, cma.ta, OptimizationParameters, pctassets, n.portfolios=10){
+create.efficient.frontier <- function(cma, cma.ta, OptimizationParameters, pctassets, n.portfolios=10){
    
     nclasses<-cma.ta$nclasses
     out<-matrix(0,nrow=n.portfolios,ncol=2+nclasses)

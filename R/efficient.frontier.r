@@ -287,7 +287,7 @@ combine.class.wts<-function(x,suppress.zero=FALSE){
 #'
 plot.eff<-function(x, ...){
     plot(round(x[,"Risk"]*100,2),round(x[,"Return"]*100,2),main="Efficient Frontier",col="blue",
-         xlab="Std. Dev. %",ylab="After-Tax Return %",type="l",...)
+         xlab="Std. Dev. %",ylab="Return %",type="l",...)
 }
 
 #' Print Efficient Frontier

@@ -1,0 +1,229 @@
+---
+title: "TaxAwareAA Introduction"
+author: "Rex Macey"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{TaxAwareAA Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(TaxAwareAA)
+library(readxl)
+```
+## Overview
+
+TaxAwareAA is a package for performing tax-aware asset allocation. TaxAwareAA attempts to both allocate and 
+locate assets in a tax aware manner considering a variaty of real-world portfolio constraints. 
+Its main functions create one or more efficient portfolio.
+
+To perform a tax aware asset allocation we need to have a set of assumptions about the assets (also called asset 
+classes in this documentation). These set of assumptions are put in an object called a cma (capital market
+assumptions). For clarity, we refer to the base, non-tax-adjusted set of capital market assumptions as a cma. 
+We also need to know something about the investor. We use an object called investor.  We can combine a cma and an 
+investor into a tax-aware capital market assumption object, the cma.ta. With this input, we can produce tax-aware portfolios.
+
+We assume a set of returns and covariance matrix for a set of asset classes  just as we would in a non-tax-aware exercise. Additional information on the nature of the asset classes is required so that we can calculate the impact 
+of taxes.  For example, we need the yield on each asset and the character of the income it generates (ordinary income, tax-free income, qualified dividend).
+
+ We allow the investor to have assets in three types of accounts: 
+ 
+ - Taxable: An account in which income and capital gains are subject to tax. Example, a brokerage account for an individual.
+ - Deferred: An account that is taxed when the assets are withdrawn. Example, an IRA.
+ - Exempt: An account which is not subject to tax. Example, a Roth IRA
+ 
+We know amounts the investor has in each type of account. Further, we know  the rates at which income, capital gains and qualified dividends are taxed.
+
+To create a tax-aware cma, we triple the number of asset classes of the base (no tax) cma. We have each of the base asset classes in each of the three account types and treat them separately. So if there were just bonds and stocks in the base cma, in a tax-aware cma we have six asset classes.
+
+The (after-tax) returns of the assets differ depending on their location. The variance of the assets also changes. In the face of taxes, the government reduces the gain (or loss) thus reducing the variability.  
+
+This tax-aware optimization is similar to a non-tax aware.  We use 3x the number of assets (N). The first N assets are those in the taxable account. The second N are in the deferred. The last N are in the exempt account.  
+
+The first two steps are creating an investor and a cma object.  
+
+## The Investor
+
+The `investor.create` function creates an investor object. It requires the values by account type, tax rates, and a time horizon in years. Below we create an investor with $1,000,000 across the three accounts.  
+
+Warning: Some functions may not perform well if the value of any of the accounts is zero.  If problems surface, set the value to 0.01 (a penny).
+
+```{r createInvestor}
+investor<-investor.create(value.taxable = 500000,
+                              value.deferred = 400000,
+                              value.exempt = 100000,
+                              horizon = 10,
+                              taxrate.state = 0.06,
+                              taxrate.ordinc = 0.33,
+                              taxrate.LTCG = 0.20,
+                              taxrate.STCG = 0.33,
+                              taxrate.qualdiv = 0.20,
+                              taxrate.surcharge = 0.038) 
+
+```
+There's a print function for the investor.  Below the ordinary rate shows how the federal and state rates are combined assuming deductibility of the state taxes $Rate on Ordinary Income = (ordinc + state + surcharge) * (1 - state)$.
+
+```{r invstorPrint}
+print(investor)
+```
+
+## Capital Market Assumptions (CMA) 
+
+Tax aware asset allocation requires more data about the investments than one without tax considerations.  In addition to expected returns and covariances (or correlations and risk), we need to characteristics that determine how the investment is taxed such as the character of its income.  
+
+To maintain the simplicity of the vignette, we are showing an example of how to create a CMA importing data from Excel.  The folder `system.file("extdata", package = "TaxAwareAA",mustWork = TRUE)` has three example files with input for the CMA.  `RAFI 201808 w Muni.xlsx` has a table of expected returns on the Expected.Returns sheet in the range B4:L32. The date of the assumptions is cell C50.  The correlations are in B4:AD32 and covariances are in cells C35:AD63 on the Expected.Risk.Matrix. On the Expected.Returns sheet the columns should include: 'Asset Class', "Expected Return (Nominal)", "Expected Return (Real)", "Average Net Yield", and "Capital Growth".  NOTE: the expected returns are assumed to be geometric, not arithmetic.  The Real return equals the Yield plus the Growth plus the Valuation Change. To change the ranges where these data are found you can modify `xlranges.yaml` with a text editor. Other sheets can be absent.  These two files are used to read in the expected return and risk data.
+
+The acname_table sheet in `acname_table.xlsx` contains descriptions of each asset class as well as some constraints.  The first two columns give the names of the asset classes in the return and covariance matrix ranges.  The third column are the short names of the classes we prefer.  The LongName is a longer name that we prefer.  The columns IntOrd, IntTE, DivQual, and DivOrd should sum to 1.0 for each row and repesent how the income from as asset class is categorized.  Turnover is the annual turnover (fraction that is sold) each year.  The LTCG and STCG sum to 1.0 and represent how much of the capital gains in a year is long term and short term.  ForeignTaxWithheld is the fraction of tax on income withheld by foreign governments.  Expenses is subtracted from the expected return representing the cost of owning the investment.  The Min and Max columns are known as box constraints on each asset class.  After that are a variable number of user defined constraints.  The requirement is the the sum of the portfolio weights times these values must be at least zero.  The MinDomEqRel makes sure the domestic equity weight is at least 40% of all of the equity weights.  
+
+```{r cmaCreate, warning=FALSE}
+file_loc <- paste0(system.file("extdata", package = "TaxAwareAA",mustWork = TRUE),"/")
+acname_file <- "acname_table.xlsx"
+retrisk_file <- "RAFI 201809 w Muni.xlsx"
+cma <- rafi.cma(rafi.data.loc = file_loc, acnametable = acname_file, xls.file.name = retrisk_file)
+```
+
+Printing the cma, shows the assumptions and a chart.  We have not adjusted these for taxes, so they are pretax.
+
+```{r cmaPrint}
+cma
+```
+
+Once the cma and investor are created, it's simple to create the cma.ta with the `cma.ta.create` function.
+
+```{r}
+cma.ta<-cma.ta.create(cma,investor)
+print(cma.ta)
+```
+
+The taxable return assumes the investment is held for the `horizon` specified in the `investor` object. Over that period, the investor will experience income and capital gains which are taxed.  At the end of the horizon it is assumed the investment is sold and remaining capital gains are taxed.  All that leads to an after-tax return. These are arithmetic returns and are adjusted for the expense ratio.
+
+## Optimization Parameters
+
+Efficient portfolios provide the highest return for a given level of risk and satisfy other constraints.  TaxAwareAA is designed to provide flexibility in setting up the optimization:
+
+- Return is weighted between pretax and after-tax according to `OptimizationParameters$WtAfterTax`.
+- Minimum and Maximum weights in each asset class which can be defined in the cma object.  These are weights across accounts. For example, the minimum or maximum for US Equity across the taxable, deferred, and exempt accounts.  
+- Maximum risk (absolute) is specified by the standard deviation in either absolute terms (a number) or by providing the portfolio weights of a benchmark in which case the expected risk of the benchmark will be calculated and used as the constraint.  One may also find the minimum risk portfolio using the `find_min_risk_portfolio` function.
+- Maximum tracking error (relative risk) relative to a benchmark given by `OptimizationParameters$MaxTrackingError`.
+- Minimum and Maximum number of base asset classes given by `OptimizationParameters$MinBaseClasses` and `OptimizationParameters$MaxBaseClasses`.  Base classes are the asset classes pretax and are in the CMA. For example, US Equity might be a base class whereas US Equity in the taxable account and US Equity in a deferred account are non-base asset classes. 
+- Maximum turnover is the difference from the weightings of the optimal portfolio and the current holdings.  Selling all current holdings to buy new holdings would be a turnover of 100%.
+- Minimum cash weight in each account (not across accounts).  Setting the minimum cash across all accounts is done by setting the minimum for the cash asset class in the cma.  To indicate this should be a minimum in each account (presumably to help avoid overdrawing accounts) set `OptimizationParameters$MinAcctCash` to `TRUE` and provide the name of the cash asset class in `OptimizationParameters$CashName`.
+- Minimum non-zero weight controls the minimum for a position size if there's a non-zero weight to the asset class.  This is set by `OptimizationParameters$MinNonZeroWt`.  For example, perhaps if you are going to invest in an asset you want to allocate a minimum of 3% to it; otherwise it's a nuisance.  This constraint is ignored if the CMA has a minimum below this setting.  So if you indicate you want at least 2% in Cash, it will allow a 2% Cash position even if the `OptimizationParameters$MinNonZeroWt` paramter is 3%. 
+- User defined constraints allow great flexibility to control the relative weights of one or more assets in the portfolio.  For example, a US investor with a domestic bias might require US Stocks to be at least 40% of all stocks in the portfolio.  These are specified when setting the cma.
+- Class group constraints allow the weighting of one or more assets to be within a range of a benchmark weight.  For example, the portfolio equities might be constrainted to be within +/- 10% of the benchmark so that if the benchmark is 60% the portfolio's equity may range from 50% to 70%.
+
+```{r setOptimizationParameters}
+OptimizationParameters <- dplyr::as_tibble(list(WtAfterTax = 0.5, 
+                                         MinNonZeroWt = 0.03, 
+                                         MaxTrackingError = 0.03,
+                                         MinBaseClasses = 3,
+                                         MaxBaseClasses = 10,
+                                         PenaltyFactor = 25000000000,
+                                         MaxTurnover = 1, 
+                                         MinAcctCash = TRUE,
+                                         CashName = 'USCash'))
+print(OptimizationParameters)
+```
+The TaxAwareAA uses to solve this problem creates a function (think equation) this is the expected return minus a penalty.  If a constraint is met, it contributes zero to the penalty.  If the constraint is not matched, then there is a penalty.  For example, if the portfolio has 12 base classes when `OptimizationParameters$MaxBaseClasses` is 10, then the contribution to the penalty will be $(12 - 10)^2 * OptimizationParameters$PenaltyFactor$.  We set the penalty factor to a large value (25 billion here). 
+
+### User defined constraints    
+This is a bit more detail on creating user defined constraints.  A user defined constraint is a set of coefficients (numbers), one per base asset class. The portfolio weight of each asset class is multiplied by the coefficient and all of these products are added together. The sum must be at least zero.  So let's say we want US Equity to be at least 60% of total equity.  And to complicate the problem, we have Global Equity which is itself 50% US Equity.  To make the math easier to read, U represents US Equity, I represents other equity with no exposure to the US and G is the Global class.  We want
+$(U + 0.5G) / (U + I  + G) >= 0.6$.  This says the ratio of US equity (the numerator) to total stocks (the denominator) must be at least 0.6.  Multiplying each side by the denominator $U + 0.5G >= 0.6U +0.6I +0.6G$.  Bringing everything to the left hand side, $0.4U - 0.6I - 0.1G >= 0$.  To create our user defined constraint, each US equity class would have a +0.4 coefficient, international equity would have -0.6, and the global class would have -0.1. All other clases would have zero.  We have used such constraints to establish minimum weights to US investment grade fixed income and to require US Large to be at least 75% of US equities to give a couple of examples.
+
+### Classs Group Constraints     
+
+As described above, the sum weights of multiple asset classes can be constrained to be within a tolerance of a benchmark.  The R code below shows how three such group constraints could be set up.  A list is created with an element containing the names of each group.  After all the group names have been defined, the relative weights are defined. 
+
+```{r}
+ClassGroupConstraints <- list(names.equity = c("Commodities","REIT","USLarge","USSmall","EAFEEquity","EMEquity", "GlblEquity"), 
+                              names.fixed = c("USCash","STUSTsy","IntUSTsy", "USCorpInt", "LTUSTsy","USTIPs","USCoreBonds","Munis"), 
+                              names.other = c("GlobalCore","HiYld","BankLoans","EMNonLclDebt","EMLocalDebt","EMCurrency", "GlblxUSTsy", "GlblxUSCorp"), 
+                              rel.wt.equity = c(-.1, 0.1), # allowable weights relative to benchmark
+                              rel.wt.fixed = c(-.1, 0.1), 
+                              rel.wt.other = c(-.1, 0.1))
+```
+
+### Benchmarks
+
+Benchmark portfolios may be useful and are required for tracking error constraints and class group constraints. A benchmark object may be created per the `create.benchmark` function.  In this example, our benchmark is 40% municipal bonds and 60% equities spread across US, EAFE, and emerging markets.    
+```{r createBenchmark}
+benchmark.txt <- "Munis=0.40,USLarge=0.36,EAFEEquity=0.19,EMEquity=0.05"
+benchmark <- create.benchmark(benchmark.txt, cma, cma.ta, investor, OptimizationParameters)
+```
+
+The bencmark object was pre-, after- and weighted returns as well as pre- and after-tax risk.  It has an 'x.ac' element which are the weights across the base asset classes and 'x' for the extended (3x base) classes.  
+
+```{r displayBenchmark, comment=""}
+paste0("Pretax return    ", round(100*benchmark$pretax.ret,1),"%")
+paste0("After-tax return ", round(100*benchmark$aftertax.ret,1),"%")
+paste0("Weighted return  ", round(100*benchmark$wtdreturn,1),"%")
+paste0("Pretax risk      ", round(100*benchmark$pretax.risk,1),"%")
+paste0("After-tax risk   ", round(100*benchmark$aftertax.risk,1),"%")
+```
+
+## Efficient Portfolios
+There are several functions for constructing portfolios:
+- `find_max_return_portfolio` to find the maximum return given an absolute or relative risk budget.
+- `create.efficient.frontier` create an efficient frontier. 
+- `find_min_risk_portfolio` to find the minimum risk portfolio.  This is used within `create.efficient.frontier` and me called separately.
+
+### `find_max_return_portfolio`
+
+If `find_max_return_portfolio` is called with the wts.bench parameter, a portfolio is created with relative risk constraints.  Namely, the risk of the portfolio should not be larger than the risk of the portfolio defined by wts.bench. Also the maximum tracking error and class group contraints should be satisfied.  If it is called with the risk.budget constraint instead of the wts.bench, the a portfolio meeting the absolute constraint is created and there are no tracking error or class group constraints (because we don't have a benchmark).  Below are the examples of the two calls.  Because there is no current portfolio (curx=NULL), there is no turnover constraint.  The pctassets object is created by `investor.pctassets` and returns a named vector with the percentage of the assets in each account.  (Note to self - In future versions, this should be part of an investor object).  The absolute version is designed to be used to create portfolios on the efficient frontier. The `verbose` parameter should be set to FALSE for both of these calls.
+
+```{r}
+pctassets <- investor.pctassets(investor)
+portfolio_relative <- find_max_return_portfolio(cma.ta=cma.ta, cma=cma, wts.bench.ta=benchmark$x, 
+                                             wts.bench=benchmark$x.ac, 
+                                             OptimizationParameters=OptimizationParameters, 
+                                             ClassGroupConstraints = ClassGroupConstraints, 
+                                             pctassets=pctassets, curx=NULL, verbose=FALSE)
+
+portfolio_absolute <- find_max_return_portfolio(cma.ta=cma.ta, cma=cma, risk.budget = 0.0931, 
+                                             OptimizationParameters=OptimizationParameters, 
+                                             verbose=FALSE)
+```
+
+These portfolio objects are lists containing: x.ac the weights to the base classes, x the weights to the extended classes, the pre- and after-tax returns and risks, and the wtdreturn.
+
+### `create.efficient.frontier`
+
+This will create an efficient frontier with a user defined number of portfolios.  The portfolios do not consider tracking error, class group constraints or turnover.  It calculates a minimum risk portfolio, a maximum return portfolio.  It then creates a sequence of risks from the minimum to the maximum so that the number of portfolios equals the user defined number. 
+```{r createEFF}
+ eff <- create.efficient.frontier(cma, cma.ta, OptimizationParameters, pctassets, n.portfolios=5)
+```
+
+The efficient frontier object is a matrix with one row per portfolio. The first two columns are Return (weighted), and Risk (pretax).  The next columns are the weights of the portfolios.  There are print and plot functions for it.
+
+```{r showEFF}
+print(eff, content = "brief")
+plot(eff)
+```
+
+
+### Objectives and Penalties
+
+Diving deeper, there are objective functions that the optimizer tries to maximize.  These are
+- `aa_objective_rel_risk` for relative risk 
+- `aa_objective_abs_risk` for absolute risk 
+- `aa_objective_min_risk` for min risk 
+
+Refer to help for the arguments for each.  These may be called particularly if you want to check that the penalty is zero for a portfolio.  Below we call one of the functions with `verbose = TRUE` for more details. 
+
+```{r objCalcExample, comment=""}
+obj <- aa_objective_rel_risk(portfolio_relative$x, cma.ta, cma, wts.bench.ta = benchmark$x, wts.bench = benchmark$x.ac,
+                             OptimizationParameters, ClassGroupConstraints, pctassets, verbose=TRUE)
+
+paste0("Weighted Excess Return ", round(obj$wtdexcessreturn,2))
+paste0("Total Penalties ", obj$penalties)
+paste0("Objective Value (Return - Penalties) ", round(obj$objectivevalue,2))
+paste("Breakdown of the penalties")
+obj[[4]]
+```
+

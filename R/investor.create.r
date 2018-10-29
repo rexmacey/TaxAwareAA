@@ -116,6 +116,6 @@ investor.pctassets <- function(x){
    out <- c(x["taxed.pct"], 
             x["deferred.pct"], 
             x["exempt.pct"])
-   names(out) <- c("taxed", "deferred", "exempt")
+   names(out) <- c("taxed.pct", "deferred.pct", "exempt.pct")
    return(out)
 }
