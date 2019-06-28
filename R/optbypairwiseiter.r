@@ -18,8 +18,8 @@ calc_penalties <- function(...) {
     if(! "cma" %in% names(ddd)) stop("cma missing from calc_penalties.")
     if(! "OptimizationParameters" %in% names(ddd)) stop("OptimizationParameters missing from calc_penalties.")
     if(! "verbose" %in% names(ddd)) verbose <- FALSE
-    out <- numeric(12)
-    names(out) <- unlist(strsplit("Risk,TrackingError,NonZeroWts,MinNonZeroWt,Turnover,BoxMin,BoxMax,UDConstraint,ClassMin,ClassMax,CashMin,Total", ","))
+    out <- numeric(13)
+    names(out) <- unlist(strsplit("Risk,TrackingError,NonZeroWts,MinNonZeroWt,Turnover,BoxMin,BoxMax,UDConstraint,ClassMin,ClassMax,CashMin,ClassGroupConstraints,Total", ","))
     x.ac <- TaxAwareAA::calc.ac.wts(ddd$x, ddd$cma.ta)
     if("wts.bench" %in% names(ddd)){
         riskslack <- TaxAwareAA::portrisk(x.ac, ddd$cma) - TaxAwareAA::portrisk(ddd$wts.bench, ddd$cma)
@@ -39,8 +39,9 @@ calc_penalties <- function(...) {
             portgroupalloc <- sum(x.ac[cnames])
             benchgroupmin <- sum(ddd$wts.bench[cnames]) + ctol[1]
             benchgroupmax <- sum(ddd$wts.bench[cnames]) + ctol[2]
-            out["ClassGroupConstraints"] <- ifelse(portgroupalloc >= benchgroupmin, 0, (portgroupalloc - benchgroupmin)^2) +
-                                            ifelse(portgroupalloc <= benchgroupmax, 0, (portgroupalloc - benchgroupmax)^2)    
+            out["ClassGroupConstraints"] <- out["ClassGroupConstraints"] + 
+                ifelse(portgroupalloc >= benchgroupmin, 0, (portgroupalloc - benchgroupmin)^2) +
+                ifelse(portgroupalloc <= benchgroupmax, 0, (portgroupalloc - benchgroupmax)^2)    
         }
     }
     nzwts <- sum(x.ac[ddd$cma$ac.data$Min==0] > 0) # number of non-zero wts for classes with no minimum. 
