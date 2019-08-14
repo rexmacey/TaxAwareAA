@@ -87,6 +87,7 @@ ATReturn.taxable<-function(yld,growth,valChg,intOrd,intTE,divQual,divOrd,turnove
     # Calculates the After-Tax return from before tax inputs and tax rates.  Assumes losses can be used and
     # assumes gains are realized and taxed at horizon at long-term rate.
     yld<-as.numeric(yld)
+    Expense = as.numeric(Expense)
     price<-100 # initialize value and basis and price to $100
     shares<-1
     v<-price*shares
@@ -157,6 +158,7 @@ ATReturn.deferred<-function(yld,growth,valChg,foreigntaxwithheld,Expense,taxROrd
                          Expense = Expense, 
                          horizon=horizon)
     # out<-((1+out)^horizon*(1-taxROrdInc))^(1/horizon)-1 # reduce by taxes
+    return(out)
 }
 
 ATReturn.exempt<-function(yld,growth,valChg,foreigntaxwithheld,Expense,horizon=10){
@@ -164,6 +166,7 @@ ATReturn.exempt<-function(yld,growth,valChg,foreigntaxwithheld,Expense,horizon=1
     growth<-as.numeric(growth)
     valChg<-as.numeric(valChg)
     foreigntaxwithheld<-as.numeric(foreigntaxwithheld)
+    Expense <- as.numeric(Expense)
     price<-100 # initialize value and basis and price to $100
     shares<-1
     v<-price*shares

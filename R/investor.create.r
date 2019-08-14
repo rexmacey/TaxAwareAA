@@ -38,11 +38,18 @@ investor.create<-function(value.taxable,value.deferred,value.exempt,
                        totalassets = value.taxable + value.deferred + value.exempt)
     pretax.pctwts <- investor.values / investor.values["totalassets"]
     names(pretax.pctwts) <- c("taxed.pct", "deferred.pct", "exempt.pct", "totalassets.pct")
-    taxrates<-c(OrdInc=(taxrate.ordinc+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
-                LTCG=(taxrate.LTCG+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
-                STCG=(taxrate.STCG+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
-                QualDiv=(taxrate.qualdiv+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
+    # taxrates<-c(OrdInc=(taxrate.ordinc+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
+    #            LTCG=(taxrate.LTCG+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
+    #            STCG=(taxrate.STCG+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
+    #            QualDiv=(taxrate.qualdiv+taxrate.state+taxrate.surcharge)*(1-taxrate.state),
+    #            taxRState=taxrate.state)
+    
+    taxrates<-c(OrdInc=(taxrate.ordinc+taxrate.state+taxrate.surcharge),
+                LTCG=(taxrate.LTCG+taxrate.state+taxrate.surcharge),
+                STCG=(taxrate.STCG+taxrate.state+taxrate.surcharge),
+                QualDiv=(taxrate.qualdiv+taxrate.state+taxrate.surcharge),
                 taxRState=taxrate.state)
+    
     temp <- value.deferred*(1-taxrates["OrdInc"])
     names(temp)<-""
     investor.values.at <- c(taxed.at = value.taxable,

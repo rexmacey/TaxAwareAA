@@ -14,8 +14,10 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+library(Quandl)
 library(TaxAwareAA)
 library(readxl)
+Quandl::Quandl.api_key(Sys.getenv("QUANDL_API_KEY"))
 ```
 ## Overview
 
@@ -55,15 +57,15 @@ The `investor.create` function creates an investor object. It requires the value
 Warning: Some functions may not perform well if the value of any of the accounts is zero.  If problems surface, set the value to 0.01 (a penny).
 
 ```{r createInvestor}
-investor<-investor.create(value.taxable = 500000,
-                              value.deferred = 400000,
-                              value.exempt = 100000,
+investor<-investor.create(value.taxable = 900000,
+                              value.deferred = 50000,
+                              value.exempt = 50000,
                               horizon = 10,
                               taxrate.state = 0.06,
-                              taxrate.ordinc = 0.33,
-                              taxrate.LTCG = 0.20,
-                              taxrate.STCG = 0.33,
-                              taxrate.qualdiv = 0.20,
+                              taxrate.ordinc = 0.35,
+                              taxrate.LTCG = 0.15,
+                              taxrate.STCG = 0.35,
+                              taxrate.qualdiv = 0.15,
                               taxrate.surcharge = 0.038) 
 
 ```
@@ -83,8 +85,8 @@ The acname_table sheet in `acname_table.xlsx` contains descriptions of each asse
 
 ```{r cmaCreate, warning=FALSE}
 file_loc <- paste0(system.file("extdata", package = "TaxAwareAA",mustWork = TRUE),"/")
-acname_file <- "acname_table.xlsx"
-retrisk_file <- "RAFI 201809 w Muni.xlsx"
+acname_file <- "acname_US_TaxSens.xlsx"
+retrisk_file <- "RAFI 201906 w Muni.xlsx"
 cma <- rafi.cma(rafi.data.loc = file_loc, acnametable = acname_file, xls.file.name = retrisk_file)
 ```
 
