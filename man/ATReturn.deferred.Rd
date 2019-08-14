@@ -4,8 +4,8 @@
 \alias{ATReturn.deferred}
 \title{Calculation of after-tax return in a deferred account}
 \usage{
-ATReturn.deferred(yld, growth, valChg, foreigntaxwithheld, taxROrdInc,
-  risk, horizon = 10)
+ATReturn.deferred(yld, growth, valChg, foreigntaxwithheld, Expense,
+  taxROrdInc, risk, horizon = 10)
 }
 \arguments{
 \item{yld}{Yield on the investment}
@@ -15,6 +15,8 @@ ATReturn.deferred(yld, growth, valChg, foreigntaxwithheld, taxROrdInc,
 \item{valChg}{Change in valuation of the investment}
 
 \item{foreigntaxwithheld}{is the percent of income withheld for foreign taxes}
+
+\item{Expense}{Annual expense rate}
 
 \item{taxROrdInc}{Tax rate on ordinary income}
 

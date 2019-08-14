@@ -5,7 +5,7 @@
 \title{Calculation of after-tax return in a taxable account}
 \usage{
 ATReturn.taxable(yld, growth, valChg, intOrd, intTE, divQual, divOrd,
-  turnover, LTCG, STCG, taxROrdInc, taxRQDiv, taxRLTCG, taxRSTCG,
+  turnover, LTCG, STCG, Expense, taxROrdInc, taxRQDiv, taxRLTCG, taxRSTCG,
   taxRState, horizon = 10)
 }
 \arguments{
@@ -28,6 +28,8 @@ ATReturn.taxable(yld, growth, valChg, intOrd, intTE, divQual, divOrd,
 \item{LTCG}{Percent of capital gains taxed at long-term rate}
 
 \item{STCG}{Percent of capital gains taxed at short-term rate}
+
+\item{Expense}{Annual expense rate}
 
 \item{taxROrdInc}{Tax rate on ordinary income}
 
