@@ -5,7 +5,7 @@
 \title{Use resampling to find an efficient portfolio}
 \usage{
 resample.target.risk(target.risk, cma.ta, n.samples = 100, thresh = 0,
-  tol = 0.00004)
+  tol = 4e-05)
 }
 \arguments{
 \item{target.risk}{The target risk for which to find an efficient portfolio.}

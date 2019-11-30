@@ -5,7 +5,7 @@
 \title{Find the portfolio with the minimum standard deviation given a target arithmetic return
 and a set of capital market assumptions}
 \usage{
-optimize.target.return(target.ret, cma.ta, tol = 0.00004)
+optimize.target.return(target.ret, cma.ta, tol = 4e-05)
 }
 \arguments{
 \item{target.ret}{The target return.  Should be a feasible return.}
